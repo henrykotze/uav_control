@@ -1,0 +1,22 @@
+
+# def forward_model(inputsize,i1,i2,i3,i4,f1,f2,f3,f4,f5,f6,nn_model,nn_input_matrix):
+#
+#     nn_input_matrix = np.roll(nn_input_matrix,-1) # move elements one timestep back
+#     # insert new timestep
+#     nn_input_matrix[0,0] = i1/maxInput
+#     nn_input_matrix[0,1*Nt] = i2/maxInput
+#     nn_input_matrix[0,2*Nt] = i3/maxInput
+#     nn_input_matrix[0,3*Nt] = i4/maxInput
+#     nn_input_matrix[0,4*Nt] = f1/maxPdot
+#     nn_input_matrix[0,5*Nt] = f2/maxQdot
+#     nn_input_matrix[0,6*Nt] = f3/maxRdot
+#     nn_input_matrix[0,7*Nt] = f4/maxUdot
+#     nn_input_matrix[0,8*Nt] = f5/maxVdot
+#     nn_input_matrix[0,9*Nt] = f6/maxWdot
+#
+#     inv_mdl_input = nn_input_matrix[0].reshape((1,inputsize))
+#     print(inv_mdl_input)
+#     predictions = nn_model.predict(inv_mdl_input)
+#     print('-----------------------')
+#
+#     return [predictions,nn_input_matrix]
