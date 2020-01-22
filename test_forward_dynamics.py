@@ -22,14 +22,14 @@ parser = argparse.ArgumentParser(\
 
 parser.add_argument('-model_path', default='./nn_mdl', help='path to neural network model')
 parser.add_argument('-n', default=0, help='Trained response to test')
-parser.add_argument('-loc', default=0, help='Trained response to test')
+parser.add_argument('-loc', default='./train_data/', help='Trained response to test')
 
 
 args = parser.parse_args()
 
 
 dir = str(vars(args)['loc'])
-filename = str(vars(args)['loc'])+'/'+'respone-0.npz'
+filename = str(vars(args)['loc'])+'/'+'response-0.npz'
 model_path = vars(args)['model_path']
 number = vars(args)['n']
 
@@ -76,7 +76,7 @@ with shelve.open(model_readme) as db:
     maxU = float((db)['maxU'])
     maxW = float((db)['maxW'])
     train_dir = str((db)['loc'])
-    filename = train_dir + '/' + str((db)['filename'])
+    # filename = train_dir + '/' + str((db)['filename'])
     maxInput = float((db)['maxInput'])
 db.close()
 
@@ -129,7 +129,7 @@ def getFeaturesAndResponse(filename,Nt,timeSteps,div):
 
         data.close()
 
-        total_steps = trange(Nt, timeSteps - Nt,div, desc='Loading time step: ', leave=True)
+        total_steps = trange(Nt, timeSteps - div-2,div, desc='Loading time step: ', leave=True)
         i = 0
         # for t_steps in range( Nt, timesteps - Nt ):
         for step in total_steps:
@@ -209,6 +209,7 @@ print('-------------------------------------------------------------------------
 nn_model = keras.models.load_model(str(model_path))
 inputsize = nn_model.get_input_shape_at(0)[1]
 filename = filename.replace(str(0),str(number))
+print(filename)
 input_matrix = np.zeros((1,inputsize))
 timeSteps = int(t/dt)
 

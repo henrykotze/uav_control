@@ -62,6 +62,8 @@ print("Plotting Response of file: ", filename)
 
 data = np.load(filename)
 
+## UNDISTURBED
+
 input_1 = data['input_1']
 input_2 = data['input_2']
 input_3 = data['input_3']
@@ -82,6 +84,29 @@ R = data['R']
 Pdot = data['Pdot']
 Qdot = data['Qdot']
 Rdot = data['Rdot']
+
+#### DISTURBED
+
+
+disturbance = data['disturbance']
+
+U_disturb = data['U_disturb']
+V_disturb = data['V_disturb']
+W_disturb = data['W_disturb']
+
+Udot_disturb = data['Udot_disturb']
+Vdot_disturb = data['Vdot_disturb']
+Wdot_disturb = data['Wdot_disturb']
+
+P_disturb = data['P_disturb']
+Q_disturb = data['Q_disturb']
+R_disturb = data['R_disturb']
+
+Pdot_disturb = data['Pdot_disturb']
+Qdot_disturb = data['Qdot_disturb']
+Rdot_disturb = data['Rdot_disturb']
+
+
 i = 0
 
 data.close()
@@ -112,45 +137,67 @@ plt.grid()
 
 # plt.show()
 
-# plt.figure(2)
-# plt.plot(P,'-', mew=1, ms=8,mec='w')
-# plt.plot(Q,'-', mew=1, ms=8,mec='w')
-# plt.plot(R,'-', mew=1, ms=8,mec='w')
-# plt.grid()
+plt.figure(2)
+plt.plot(U,'-', mew=1, ms=8,mec='w')
+plt.plot(V,'-', mew=1, ms=8,mec='w')
+plt.plot(W,'-', mew=1, ms=8,mec='w')
+plt.grid()
 #
 #
-# plt.figure(3)
-# plt.title('Velocity')
-# plt.plot(V,'-', mew=1, ms=8,mec='w')
-# plt.plot(W,'-', mew=1, ms=8,mec='w')
-# plt.plot(U,'-', mew=1, ms=8,mec='w')
-# plt.grid()
-#
-#
+plt.figure(3)
+plt.plot(Pdot_disturb,'-', mew=1, ms=8,mec='w')
+plt.plot(Qdot_disturb,'-', mew=1, ms=8,mec='w')
+plt.plot(Rdot_disturb,'-', mew=1, ms=8,mec='w')
+plt.grid()
+
+
+
 plt.figure(4)
-plt.title('Acceleration In X,Y,Z Directions')
-plt.plot(Vdot,'-', mew=1, ms=8,mec='w')
-plt.plot(Wdot,'-', mew=1, ms=8,mec='w')
-plt.plot(Udot,'-', mew=1, ms=8,mec='w')
-plt.legend(['$\dot{V}$','$\dot{W}$','$\dot{U}$'])
-plt.xlabel("Time -[$\mu$s]")
-plt.ylabel('Acceleration - [m/s$^{2}$]')
+plt.plot(disturbance,'-', mew=1, ms=8,mec='w')
 plt.grid()
-#
-#
+
+
+
 plt.figure(5)
-plt.title('Angular Acceleration of Drone')
-plt.plot(Pdot,'-', mew=1, ms=8,mec='w')
-plt.plot(Qdot,'-', mew=1, ms=8,mec='w')
-plt.plot(Rdot,'-', mew=1, ms=8,mec='w')
-plt.legend(['$\dot{P}$','$\dot{Q}$','$\dot{R}$'])
-plt.xlabel("Time -[$\mu$s]")
-plt.ylabel('Angular Acceleration - [rad/s$^{2}$]')
+plt.plot(U-U_disturb,'-', mew=1, ms=8,mec='w')
+plt.plot(V-V_disturb,'-', mew=1, ms=8,mec='w')
 plt.grid()
 
 
 
+plt.figure(6)
+plt.plot(P,'-', mew=1, ms=8,mec='w')
+plt.plot(Q,'-', mew=1, ms=8,mec='w')
+plt.plot(R,'-', mew=1, ms=8,mec='w')
+plt.grid()
 
 
-
+#
+#
+# plt.figure(4)
+# plt.title('Acceleration In X,Y,Z Directions')
+# plt.plot(Vdot,'-', mew=1, ms=8,mec='w')
+# plt.plot(Wdot,'-', mew=1, ms=8,mec='w')
+# plt.plot(Udot,'-', mew=1, ms=8,mec='w')
+# plt.legend(['$\dot{V}$','$\dot{W}$','$\dot{U}$'])
+# plt.xlabel("Time -[$\mu$s]")
+# plt.ylabel('Acceleration - [m/s$^{2}$]')
+# plt.grid()
+#
+#
+# plt.figure(5)
+# plt.title('Angular Acceleration of Drone')
+# plt.plot(Pdot,'-', mew=1, ms=8,mec='w')
+# plt.plot(Qdot,'-', mew=1, ms=8,mec='w')
+# plt.plot(Rdot,'-', mew=1, ms=8,mec='w')
+# plt.legend(['$\dot{P}$','$\dot{Q}$','$\dot{R}$'])
+# plt.xlabel("Time -[$\mu$s]")
+# plt.ylabel('Angular Acceleration - [rad/s$^{2}$]')
+# plt.grid()
+#
+#
+#
+#
+#
+#
 plt.show()

@@ -16,12 +16,16 @@ class drone():
     g = 9.81 # Gravity constant
     def __init__(self, sys_const, time_step=0.001):
 
-        # Notation used from Paul D Moller Thesis
-        self.m = sys_const[0] # Mass of drone
+        # Vehicle Properties
+        self.m = float(sys_const[0]) # Mass of drone
         self.g = 9.81
-        self.Ixx = sys_const[1]
-        self.Iyy = sys_const[2]
-        self.Izz = sys_const[3]
+        self.Ixx = float(sys_const[1])
+        self.Iyy = float(sys_const[2])
+        self.Izz = float(sys_const[3])
+        self.R_LD = float(sys_const[4])
+        self.d = float(sys_const[5])
+        self.r_D = float(sys_const[6])
+        self.config = str(sys_const[8])
         self.sys_const = sys_const
 
         # Forces
@@ -72,16 +76,14 @@ class drone():
         self.set_T4 = 0
 
         # time constant for each motor
-        self.tau1 = 0.05
-        self.tau2 = 0.05
-        self.tau3 = 0.05
-        self.tau4 = 0.05
+        self.tau1 = float(sys_const[7])
+        self.tau2 = float(sys_const[7])
+        self.tau3 = float(sys_const[7])
+        self.tau4 = float(sys_const[7])
 
         self.t = 0  #
         self.dt = time_step
 
-
-        self.d = 0.5
 
         # Position in the NED plane
         self.xPos = 0
@@ -213,16 +215,37 @@ class drone():
         self.Y = self.gravity_vec[1]
 
     def sumForces_Z(self):
-        self.Z = -1*(self.T1 + self.T2 + self.T3 + self.T4) + self.gravity_vec[2]
+        if(self.config == '+'):
+            self.Z = -1*(self.T1 + self.T2 + self.T3 + self.T4) + self.gravity_vec[2]
+
+
+        elif(self.config == 'x'):
+            self.Z = -1*(self.T1 + self.T2 + self.T3 + self.T4) + self.gravity_vec[2]
+
+
 
     def sumMoment_l(self):
-        self.L = self.d*(self.T4-self.T2)
+        if(self.config == '+'):
+            self.L = self.d*(self.T4-self.T2)
+
+        elif(self.config == 'x'):
+            # print("test")
+            self.L = (self.d)/(np.sqrt(2))*(self.T1 + self.T2 + self.T3 - self.T4)
 
     def sumMoment_m(self):
-        self.M = self.d*(self.T1-self.T3)
+        if(self.config == '+'):
+            self.M = self.d*(self.T1-self.T3)
+
+        elif(self.config == 'x'):
+            self.M = (self.d)/(np.sqrt(2))*(self.T1 - self.T2 + self.T3 - self.T4)
+
 
     def sumMoment_n(self):
-        self.N = self.d*(-self.T1+self.T2-self.T3+self.T4)
+        if(self.config == '+'):
+            self.N = (self.r_D*(-self.T1+self.T2-self.T3+self.T4))/self.R_LD
+
+        elif(self.config == 'x'):
+            self.N = (self.r_D)/(self.R_LD)*(self.T1 + self.T2 - self.T3 -self.T4)
 
 
     def thrust(self):

@@ -1,4 +1,3 @@
 Information of Drone
-# mass;Ixx;Iyy;Izz;Rn
+# mass;Ixx;Iyy;Izz;R_LD;d;r_D
 0.66;1.326e-3;9.3e-4;1.95e-3;7.997e-3
-

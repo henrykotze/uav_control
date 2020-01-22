@@ -1,0 +1,8 @@
+**/datasets
+**/griffin_flight_data
+**/matlab
+**/nn_models
+**/__pycache__
+**/train_data
+**/training_results
+**/val_data

@@ -30,6 +30,8 @@ parser.add_argument('-dt', default=0.01, help='timestep increments of response')
 parser.add_argument('-maxInput', default=0.5, help='maximum input given to system')
 parser.add_argument('-minInput', default=0.0, help='minimum input given to system')
 parser.add_argument('-drone', default='./drone_info.txt', help='path to file containing drone info')
+parser.add_argument('-max_freq', default=30, help='max disturbance freq')
+parser.add_argument('-min_freq', default=15, help='min disturbance freq')
 
 
 
@@ -44,12 +46,13 @@ dt = float(vars(args)['dt'])
 maxInput = float(vars(args)['maxInput'])
 minInput = float(vars(args)['minInput'])
 drone_file_path = str(vars(args)['drone'])
+min_freq = int(vars(args)['min_freq'])
+max_freq = int(vars(args)['max_freq'])
 
 drone_file = open(drone_file_path,"r")
 drone_str = drone_file.readlines()[2].split(";")[0:-1]
-drone_info = [str(i) for i in drone_str]
+drone_info = [float(i) for i in drone_str]
 drone_file.close()
-
 
 # Add a Readme file in directory to show selected variables that describe the
 # responses
@@ -77,6 +80,35 @@ def exponential_func(x, a, b):
 
 def square_func(x,a,b,c):
     return a*np.power(x,2) + b*x + c
+
+
+def generateDisturbance(responseDuration,startInput,minInput,maxInput):
+
+    input = np.zeros( (responseDuration,1) )
+    labels = np.zeros([responseDuration,max_freq-min_freq+1+1])
+    # zeroInputDur = int(responseDuration/10*(np.random.random())    ) # Duration of zero input
+    startInput = int(np.random.randint(0,responseDuration))
+    timestep = startInput
+
+
+    freq =  np.random.randint(min_freq,max_freq+1)
+    inputDur = int(responseDuration-startInput)
+    freq_content = np.zeros([1,max_freq-min_freq+1+1])
+    no_disturb = np.zeros([1,max_freq-min_freq+1+1])
+    no_disturb[0,0] = 1;
+    # print(freq_content)
+    # print(freq,freq-min_freq)
+    freq_content[0,freq-min_freq+1] = 1
+
+    magInput = (2)*np.random.random() # Magnitude Size of Input
+
+    labels[0:startInput][:] = no_disturb;
+
+    t = np.arange(timestep,timestep+inputDur)
+    input[timestep:timestep+inputDur] = np.transpose(np.array([magInput*np.sin(2*np.pi*freq*t/inputDur)]))
+    labels[timestep:timestep+inputDur][:] = freq_content
+
+    return input,labels
 
 def generateStepInput(responseDuration,startInput,minInput,maxInput):
 
@@ -224,8 +256,7 @@ def generateCombinationInput(responseDuration,startInput,minInput,maxInput):
     input2 = generateRampInput(responseDuration,startInput,minInput/4,maxInput/4)
     input3 = generateExpoInput(responseDuration,startInput,minInput/4,maxInput/4)
     input4 = generateSquareInput(responseDuration,startInput,minInput/4,maxInput/4)
-    input = input1+input2+input3+input4
-    # input = addNoise(input1+input2+input3+input4,0.5)
+    input = addNoise(input1+input2+input3+input4,500)
     return input
 
 
@@ -244,12 +275,19 @@ if __name__ == '__main__':
         # print('Number of responses: ', numSim)
         # response = pendulum(wn,zeta,y=initial*np.pi/180,time_step=dt)
         response = drone(sys_const=drone_info,time_step=dt)
+        disturbed_response = drone(sys_const=drone_info,time_step=dt)
 
         # Generate a random input to all 4 different motors
         input_1 = generateCombinationInput(timeSteps,inputTime,minInput,maxInput)
         input_2 = generateCombinationInput(timeSteps,inputTime,minInput,maxInput)
         input_3 = generateCombinationInput(timeSteps,inputTime,minInput,maxInput)
         input_4 = generateCombinationInput(timeSteps,inputTime,minInput,maxInput)
+
+        [disturbance,disturbance_labels] = generateDisturbance(timeSteps,inputTime,minInput,maxInput)
+        # plt.plot(disturbance)
+        # plt.show()
+
+#################### UNDISTURBED ###############################################
 
         U = np.zeros( (timeSteps,1) )
         V = np.zeros( (timeSteps,1) )
@@ -277,55 +315,120 @@ if __name__ == '__main__':
         N = np.zeros( (timeSteps,1) )
         L = np.zeros( (timeSteps,1) )
 
+##################### DISTURBANCE ###########################################
+
+        U_disturb = np.zeros( (timeSteps,1) )
+        V_disturb = np.zeros( (timeSteps,1) )
+        W_disturb = np.zeros( (timeSteps,1) )
+
+        Udot_disturb = np.zeros( (timeSteps,1) )
+        Vdot_disturb = np.zeros( (timeSteps,1) )
+        Wdot_disturb = np.zeros( (timeSteps,1) )
+
+        P_disturb = np.zeros( (timeSteps,1) )
+        Q_disturb = np.zeros( (timeSteps,1) )
+        R_disturb = np.zeros( (timeSteps,1) )
+
+        Pdot_disturb = np.zeros( (timeSteps,1) )
+        Qdot_disturb = np.zeros( (timeSteps,1) )
+        Rdot_disturb = np.zeros( (timeSteps,1) )
+
+        X_disturb = np.zeros( (timeSteps,1) )
+        Y_disturb = np.zeros( (timeSteps,1) )
+        Z_disturb = np.zeros( (timeSteps,1) )
+
+        M_disturb = np.zeros( (timeSteps,1) )
+        N_disturb = np.zeros( (timeSteps,1) )
+        L_disturb = np.zeros( (timeSteps,1) )
+
         t = 0
 
         while t < timeSteps:
 
-            # response.setThrust( [ input_1[t],input_2[t],input_3[t],input_4[t] ])
-            # # temporary variables
-            # states = response.getAllStates()
-            #
-            # P[t] = states[16]
-            # Q[t] = states[17]
-            # R[t] = states[18]
-            #
-            # Pdot[t] = states[13]
-            # Qdot[t] = states[14]
-            # Rdot[t] = states[15]
-            #
-            # U[t] = states[7]
-            # V[t] = states[8]
-            # W[t] = states[9]
-            #
-            # Udot[t] = states[10]
-            # Vdot[t] = states[11]
-            # Wdot[t] = states[12]
-            #
-            # L[t] = states[19]
-            # M[t] = states[20]
-            # N[t] = states[21]
-            #
-            # X[t] = states[22]
-            # Y[t] = states[23]
-            # Z[t] = states[24]
-            #
-            # # next time step
-            # simError = response.step()
+            response.setThrust( [ input_1[t],input_2[t],input_3[t],input_4[t] ])
+            disturbed_response.setThrust( [ input_1[t]+disturbance[t],input_2[t]+disturbance[t],input_3[t]+disturbance[t],input_4[t]+disturbance[t] ])
+            # temporary variables
+            states = response.getAllStates()
+            disturbed_states = disturbed_response.getAllStates()
 
-            if(simError == 1):
+############## UNDISTURBED #################################3
+
+            P[t] = states[16]
+            Q[t] = states[17]
+            R[t] = states[18]
+
+            Pdot[t] = states[13]
+            Qdot[t] = states[14]
+            Rdot[t] = states[15]
+
+            U[t] = states[7]
+            V[t] = states[8]
+            W[t] = states[9]
+
+            Udot[t] = states[10]
+            Vdot[t] = states[11]
+            Wdot[t] = states[12]
+
+            L[t] = states[19]
+            M[t] = states[20]
+            N[t] = states[21]
+
+            X[t] = states[22]
+            Y[t] = states[23]
+            Z[t] = states[24]
+
+################### DISTURBED #############################################3
+
+            P_disturb[t] = disturbed_states[16]
+            Q_disturb[t] = disturbed_states[17]
+            R_disturb[t] = disturbed_states[18]
+
+            Pdot_disturb[t] = disturbed_states[13]
+            Qdot_disturb[t] = disturbed_states[14]
+            Rdot_disturb[t] = disturbed_states[15]
+
+            U_disturb[t] = disturbed_states[7]
+            V_disturb[t] = disturbed_states[8]
+            W_disturb[t] = disturbed_states[9]
+
+            Udot_disturb[t] = disturbed_states[10]
+            Vdot_disturb[t] = disturbed_states[11]
+            Wdot_disturb[t] = disturbed_states[12]
+
+            L_disturb[t] = disturbed_states[19]
+            M_disturb[t] = disturbed_states[20]
+            N_disturb[t] = disturbed_states[21]
+
+            X_disturb[t] = disturbed_states[22]
+            Y_disturb[t] = disturbed_states[23]
+            Z_disturb[t] = disturbed_states[24]
+
+            # next time step
+            simError = response.step()
+            disturb_simError = disturbed_response.step()
+
+            if(simError == 1 or disturb_simError == 1):
                 t = timeSteps
 
             else:
                 t += 1
 
-
         # Saves response in *.npz file
         # print(system)
-        if(simError == 0):
+        if(simError == 0 and disturb_simError == 0):
             np.savez(filename,input_1=input_1,input_2=input_2,input_3=input_3,\
                     input_4=input_4,P=P,Q=Q,R=R,U=U,V=V,W=W,Pdot=Pdot,Qdot=Qdot,\
                     Rdot=Rdot,Udot=Udot,Vdot=Vdot,Wdot=Wdot,system=drone_info,\
-                    X=X,Y=Y,Z=Z,L=L,M=M,N=N)
+                    X=X,Y=Y,Z=Z,L=L,M=M,N=N,\
+                    disturbance=disturbance,disturbance_labels=disturbance_labels,\
+                    P_disturb=P_disturb,Q_disturb=Q_disturb,R_disturb=R_disturb,\
+                    U_disturb=U_disturb,V_disturb=V_disturb,W_disturb=W_disturb,\
+                    Pdot_disturb=Pdot_disturb,Qdot_disturb=Qdot_disturb,\
+                    Rdot_disturb=Rdot_disturb,Udot_disturb=Udot_disturb,\
+                    Vdot_disturb=Vdot_disturb,Wdot_disturb=Wdot_disturb,\
+                    X_disturb=X_disturb,Y_disturb=Y_disturb,Z_disturb=Z_disturb,\
+                    L_disturb=L_disturb,M_disturb=M_disturb,N_disturb=N_disturb\
+                    )
 
             # Change number on filename to correspond to simulation number
             filename = filename.replace(str(i),str(i+1))

@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
 
             i = 0
-            for step in range( Nt, timeSteps - Nt,div):
+            for step in range( Nt, timeSteps - div-2,div):
 
                 labels[i+div_timeSteps*numFile,0] = Pdot[step+div]
                 labels[i+div_timeSteps*numFile,1] = Qdot[step+div]

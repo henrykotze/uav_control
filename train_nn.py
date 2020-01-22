@@ -136,9 +136,13 @@ def build_model(dataset):
     # layers.Flatten(input_shape=(4,)),\
     layers.Dense(1000,kernel_regularizer=keras.regularizers.l2(weight_reg),input_shape=dataset.output_shapes[0] ), \
     layers.ReLU(),\
-    layers.Dense(1000,kernel_regularizer=keras.regularizers.l2(weight_reg),input_shape=dataset.output_shapes[0] ), \
+    # layers.Dropout(0.4),\
+    # layers.Dense(1000,kernel_regularizer=keras.regularizers.l2(weight_reg)), \
+    # layers.ReLU(),\
+    # layers.Dropout(0.4),\
+    layers.Dense(1000,kernel_regularizer=keras.regularizers.l2(weight_reg)), \
     layers.ReLU(),\
-   # layers.Dropout(0.4),\
+    # layers.Dropout(0.4),\
     # layers.Dense(50,kernel_regularizer=keras.regularizers.l2(weight_reg)),\
     # layers.ReLU(),\
     # layers.Dense(20,kernel_regularizer=keras.regularizers.l2(weight_reg)),\
@@ -146,7 +150,7 @@ def build_model(dataset):
     # layers.Dropout(0.2),\
     # layers.Dropout(0.4),\
 
-    layers.Dense(4,kernel_regularizer=keras.regularizers.l2(weight_reg)),\
+    layers.Dense(6,kernel_regularizer=keras.regularizers.l2(weight_reg)),\
     # layers.Linear()
     # layers.Softmax()])
     ])
