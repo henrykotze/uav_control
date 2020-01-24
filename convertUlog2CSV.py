@@ -172,7 +172,7 @@ dataset_name=''
 features = 17
 dataset_num_entries=10000000
 counter = 0
-dataset = np.zeros((features,dataset_num_entries),float)
+dataset = np.zeros((features,0))
 
 
 
@@ -294,16 +294,16 @@ for ulog_entry in tqdm(listOfLogs):
     T4 = (PWM_3_/1000 - 1)*motor_thrust*9.81
 
 
-    dataset[0,counter:counter+size_local_position] = P_
-    dataset[1,counter:counter+size_local_position] = Q_
-    dataset[2,counter:counter+size_local_position] = R_
-    dataset[3,counter:counter+size_local_position] = q1_
-    dataset[4,counter:counter+size_local_position] = q2_
-    dataset[5,counter:counter+size_local_position] = q3_
-    dataset[6,counter:counter+size_local_position] = q4_
-    dataset[7,counter:counter+size_local_position] = PWM_0_
-    dataset[8,counter:counter+size_local_position] = PWM_1_
-    dataset[9,counter:counter+size_local_position] = PWM_2_
+    dataset[0,counter:counter + size_local_position] = P_
+    dataset[1,counter:counter + size_local_position] = Q_
+    dataset[2,counter:counter + size_local_position] = R_
+    dataset[3,counter:counter + size_local_position] = q1_
+    dataset[4,counter:counter + size_local_position] = q2_
+    dataset[5,counter:counter + size_local_position] = q3_
+    dataset[6,counter:counter + size_local_position] = q4_
+    dataset[7,counter:counter + size_local_position] = PWM_0_
+    dataset[8,counter:counter + size_local_position] = PWM_1_
+    dataset[9,counter:counter + size_local_position] = PWM_2_
     dataset[10,counter:counter + size_local_position] = PWM_3_
     dataset[11,counter:counter + size_local_position] = U_
     dataset[12,counter:counter + size_local_position] = V_
@@ -319,31 +319,79 @@ for ulog_entry in tqdm(listOfLogs):
     for csvFile in listOfCSVs:
         os.remove(csvFile)
 
+
+
+
     # perhaps delete *.csv
     counter += size_local_position
 
+    if(counter >= dataset_num_entries):
+        dataset_num_entries += 1000000
+        dataset = np.hstack((dataset,np.zeros(features,1000000)))
+
+
+
 
 # resize dataset by using counter variable
+dataset = np.delete(dataset,slice(counter,dataset_num_entries,1),1)
+
+maxP = np.amax(dataset[0,:])
+maxQ = np.amax(dataset[1,:])
+maxR = np.amax(dataset[2,:])
+
+max_q1 = np.amax(dataset[3,:])
+max_q2 = np.amax(dataset[4,:])
+max_q3 = np.amax(dataset[5,:])
+max_q4 = np.amax(dataset[6,:])
+
+max_PMW0 = np.amax(dataset[7,:])
+max_PMW1 = np.amax(dataset[8,:])
+max_PMW2 = np.amax(dataset[9,:])
+max_PMW3 = np.amax(dataset[10,:])
+
+maxU = np.amax(dataset[11,:])
+maxV = np.amax(dataset[12,:])
+maxW = np.amax(dataset[13,:])
+
+maxUdot = np.amax(dataset[14,:])
+maxVdot = np.amax(dataset[15,:])
+maxWdot = np.amax(dataset[16,:])
 
 
-# with shelve.open( str(dataset_loc + '/'+nameOfDataset+'_readme')) as db:
-#     db['maxPdot'] = maxPdot
-#     db['maxQdot'] = maxQdot
-#     db['maxRdot'] = maxRdot
-#
-#     db['maxUdot'] = maxUdot
-#     db['maxVdot'] = maxVdot
-#     db['maxWdot'] = maxWdot
-#
-#     db['maxP'] = maxP
-#     db['maxQ'] = maxQ
-#     db['maxR'] = maxR
-#
-#     db['maxU'] = maxU
-#     db['maxV'] = maxV
-#     db['maxW'] = maxW
-#
-# db.close()
+
+
+# Add into dataset number of entries
+with shelve.open( str(dataset_loc + '/'+nameOfDataset+'_readme')) as db:
+
+    db['maxUdot'] = maxUdot
+    db['maxVdot'] = maxVdot
+    db['maxWdot'] = maxWdot
+
+    db['maxU'] = maxU
+    db['maxV'] = maxV
+    db['maxW'] = maxW
+
+    db['maxP'] = maxP
+    db['maxQ'] = maxQ
+    db['maxR'] = maxR
+
+    db['max_PMW0'] = max_PMW0
+    db['max_PMW1'] = max_PMW1
+    db['max_PMW2'] = max_PMW2
+    db['max_PMW3'] = max_PMW3
+
+    db['max_q1'] = max_q1
+    db['max_q2'] = max_q2
+    db['max_q3'] = max_q3
+    db['max_q4'] = max_q4
+
+    db['dataset_num_entries'] = dataset_num_entries
+    db['numOfLogs'] = len(listOfLogs)
+    db['drone_info'] = drone_info
+
+
+
+db.close()
 
 
 print('\n--------------------------------------------------------------')
