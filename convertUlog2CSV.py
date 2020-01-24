@@ -6,6 +6,9 @@ import pandas as pd
 import math
 from tqdm import trange, tqdm
 import argparse
+import shelve
+import h5py
+from terminaltables import AsciiTable
 
 
 
@@ -18,7 +21,8 @@ parser = argparse.ArgumentParser(\
 parser.add_argument('-logdir', default='./logs/', help='location to store responses')
 parser.add_argument('-drone', default='./griffin.txt', help='path to file containing drone info')
 parser.add_argument('-add_info', default='', help='path to file containing drone info')
-parser.add_argument('-dataset_name', default='', help='path to file containing drone info')
+parser.add_argument('-dataset_name', default='dataset', help='path to file containing drone info')
+parser.add_argument('-dataset_loc', default='./', help='path to file containing drone info')
 
 args = parser.parse_args()
 
@@ -28,6 +32,7 @@ logdir = vars(args)['logdir']
 drone_file_path = str(vars(args)['drone'])
 addition_info = str(vars(args)['add_info'])
 dataset_name = str(vars(args)['dataset_name'])
+dataset_loc = str(vars(args)['dataset_loc'])
 
 drone_file = open(drone_file_path,"r")
 drone_str = drone_file.readlines()[2].split(";")[0:-1]
@@ -52,6 +57,7 @@ print("===============================")
 print("===============================")
 
 motor_thrust = float(drone_info[8])
+
 
 def convertInertia2Body(q,inertia):
 
@@ -165,14 +171,12 @@ log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs'
 listOfEOI = log_eoi.split(',')
 
 
-dataset_locations = './datasets'
 description=''
-dataset_name=''
 
 features = 17
 dataset_num_entries=10000000
 counter = 0
-dataset = np.zeros((features,0))
+dataset = np.zeros((features,dataset_num_entries))
 
 
 
@@ -301,10 +305,10 @@ for ulog_entry in tqdm(listOfLogs):
     dataset[4,counter:counter + size_local_position] = q2_
     dataset[5,counter:counter + size_local_position] = q3_
     dataset[6,counter:counter + size_local_position] = q4_
-    dataset[7,counter:counter + size_local_position] = PWM_0_
-    dataset[8,counter:counter + size_local_position] = PWM_1_
-    dataset[9,counter:counter + size_local_position] = PWM_2_
-    dataset[10,counter:counter + size_local_position] = PWM_3_
+    dataset[7,counter:counter + size_local_position] = T1
+    dataset[8,counter:counter + size_local_position] = T2
+    dataset[9,counter:counter + size_local_position] = T3
+    dataset[10,counter:counter + size_local_position] = T4
     dataset[11,counter:counter + size_local_position] = U_
     dataset[12,counter:counter + size_local_position] = V_
     dataset[13,counter:counter + size_local_position] = W_
@@ -344,10 +348,10 @@ max_q2 = np.amax(dataset[4,:])
 max_q3 = np.amax(dataset[5,:])
 max_q4 = np.amax(dataset[6,:])
 
-max_PMW0 = np.amax(dataset[7,:])
-max_PMW1 = np.amax(dataset[8,:])
-max_PMW2 = np.amax(dataset[9,:])
-max_PMW3 = np.amax(dataset[10,:])
+max_T1 = np.amax(dataset[7,:])
+max_T2 = np.amax(dataset[8,:])
+max_T3 = np.amax(dataset[9,:])
+max_T4 = np.amax(dataset[10,:])
 
 maxU = np.amax(dataset[11,:])
 maxV = np.amax(dataset[12,:])
@@ -361,7 +365,11 @@ maxWdot = np.amax(dataset[16,:])
 
 
 # Add into dataset number of entries
-with shelve.open( str(dataset_loc + '/'+nameOfDataset+'_readme')) as db:
+
+print('\n--------------------------------------------------------------')
+print('Saving dataset readme at:', str(dataset_loc + '/'+dataset_name+'_readme'))
+print('--------------------------------------------------------------')
+with shelve.open( str(dataset_loc + '/'+dataset_name+'_readme')) as db:
 
     db['maxUdot'] = maxUdot
     db['maxVdot'] = maxVdot
@@ -375,19 +383,19 @@ with shelve.open( str(dataset_loc + '/'+nameOfDataset+'_readme')) as db:
     db['maxQ'] = maxQ
     db['maxR'] = maxR
 
-    db['max_PMW0'] = max_PMW0
-    db['max_PMW1'] = max_PMW1
-    db['max_PMW2'] = max_PMW2
-    db['max_PMW3'] = max_PMW3
+    db['max_T1'] = max_T1
+    db['max_T2'] = max_T2
+    db['max_T3'] = max_T3
+    db['max_T4'] = max_T4
 
     db['max_q1'] = max_q1
     db['max_q2'] = max_q2
     db['max_q3'] = max_q3
     db['max_q4'] = max_q4
 
-    db['dataset_num_entries'] = dataset_num_entries
+    db['dataset_num_entries'] = counter
     db['numOfLogs'] = len(listOfLogs)
-    db['drone_info'] = drone_info
+    db['drone_info'] = str(drone_info)
 
 
 
@@ -395,9 +403,9 @@ db.close()
 
 
 print('\n--------------------------------------------------------------')
-print('Saving features and labels to:', nameOfDataset)
+print('Saving features and labels to:', dataset_name)
 print('--------------------------------------------------------------')
 
-h5f = h5py.File(str(dataset_loc + '/'+nameOfDataset),'w')
+h5f = h5py.File(str(dataset_loc + '/'+dataset_name),'w')
 h5f.create_dataset('dataset', data=dataset)
 h5f.close()

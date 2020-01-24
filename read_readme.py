@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import sys
 import argparse
 import shelve
+from terminaltables import AsciiTable
 
 parser = argparse.ArgumentParser(\
         prog='Prints Pickle Readme File',\
@@ -21,15 +22,26 @@ args = parser.parse_args()
 name = str(vars(args)['name'])
 path = vars(args)['loc'] + '/' + name
 
-
+data = []
 
 print('----------------------------------------------------------------')
 print('Fetching training info from: ', path)
 print('----------------------------------------------------------------')
 with shelve.open(path) as db:
-    print("{:<30} {:<10}".format('Label','Value'))
+    # print("{:<30} {:<10}".format('Label','Value'))
     for key,value in db.items():
-        print("{:<30} {:<10}".format(key, value))
+        # print("{:30} {:<10}".format(key, value))
+        data.append([str(key),str(value)])
+
+
+table  = AsciiTable(data)
+table.inner_row_border = True
+print(table.table)
+
+
+
+
+
 
 
 db.close()
