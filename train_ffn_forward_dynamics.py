@@ -17,6 +17,7 @@ import argparse
 import sys
 import shelve
 import argparse
+import h5py
 
 parser = argparse.ArgumentParser(\
         prog='Train a feedforward neural network for the forward dynamics of a drone',\
@@ -26,7 +27,6 @@ parser = argparse.ArgumentParser(\
 
 parser.add_argument('-train_dataset_path', default='', help='path to training dataset')
 parser.add_argument('-val_dataset_path', default='', help='path to validation dataset')
-parser.add_argument('-layers', default=3, help='number of hidden layers')
 parser.add_argument('-neurons', default=10, help='number of neurons within hidden layers')
 parser.add_argument('-epochs', default=10, help='number of neurons within hidden layers')
 parser.add_argument('-model_name', default='forward_dynamics_model', help='name of model')
@@ -87,11 +87,12 @@ def create_model(input_shape=25):
 
 
 # Load dataset
-def load_dataset():
-    pass
-
-
-
+def load_dataset(path_to_h5py):
+    print('Reading dataset file: {}'.format(path_to_h5py))
+    f = h5py.File(path_to_h5py, 'r')
+    print('{} contains: {}'.format(path_to_h5py,f.keys())
+    dataset = f['dataset']
+    return dataset
 
 def train_step(model, optimizer, x_train, y_train):
 
