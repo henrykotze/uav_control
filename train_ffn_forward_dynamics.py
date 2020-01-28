@@ -60,10 +60,12 @@ with shelve.open(dataset_readme) as db:
     for key,value in db.items():
         data.append([str(key),str(value)])
 db.close()
-
 table  = AsciiTable(data)
 table.inner_row_border = True
 print(table.table)
+
+# num_samples = data['dataset_num_entries']
+print(data)
 
 
 print('\n--------------------------------------------------------------')
@@ -96,7 +98,7 @@ test_loss = tf.keras.metrics.Mean('test_loss', dtype=tf.float32)
 test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy('test_accuracy')
 
 # Building model
-def create_model(input_shape=25):
+def create_ffnn_model(input_shape=10):
     model = keras.Sequential([
     layers.Dense(200,input_shape=(input_shape,), dtype='float32',kernel_initializer='glorot_uniform'), \
     layers.ReLU(),\
@@ -105,71 +107,32 @@ def create_model(input_shape=25):
     layers.Dense(6)])
     return model
 
+def create_lstm_model():
+    pass
 
 
-def fetch_next_training_sample(dataset,counter,window):
+# Needs some cleaning
+def multivariate_data(dataset, target, start_index, end_index, history_size, target_size, step, single_step=False):
+    data = []
+    labels = []
 
-    #  Input to neural network
-    q1 = dataset[3,counter:counter+window]
-    q2 = dataset[4,counter:counter+window]
-    q3 = dataset[5,counter:counter+window]
-    q4 = dataset[6,counter:counter+window]
-    
-    U = dataset[11,counter:counter+window]
-    V = dataset[12,counter:counter+window]
-    W = dataset[13,counter:counter+window]
+    start_index = start_index + history_size
+    if end_index is None:
+        end_index = len(dataset) - target_size
 
-    T1 = dataset[7,counter:counter+window+1]
-    T2 = dataset[8,counter:counter+window+1]
-    T3 = dataset[9,counter:counter+window+1]
-    T4 = dataset[10,counter:counter+window+1]
+    for i in range(start_index, end_index):
+        indices = range(i-history_size, i, step)
+        # print(dataset[:,indices].flatten())
+        data.append(dataset[:,indices].flatten())
 
-    # Outputs of neural network
-    P = dataset[0,counter+window+1]
-    Q = dataset[1,counter+window+1]
-    R = dataset[2,counter+window+1]
+        if single_step:
+            labels.append(dataset[:,i+target_size].flatten())
+            # print(labels)
+            # labels.append(target[i+target_size])
+        else:
+            labels.append(target[i:i+target_size])
 
-
-    Udot = dataset[14,counter+window+1]
-    Vdot = dataset[15,counter+window+1]
-    Wdot = dataset[16,counter+window+1]
-
-    inputs = [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
-    outputs = [P,Q,R,Udot,Vdot,Wdot]
-
-    return [inputs,outputs]
-
-
-def fetch_next_validation_sample(dataset,counter,window):
-    #  Input to neural network
-    q1 = dataset[3,counter:counter+window]
-    q2 = dataset[4,counter:counter+window]
-    q3 = dataset[5,counter:counter+window]
-    q4 = dataset[6,counter:counter+window]
-    U = dataset[11,counter:counter+window]
-    V = dataset[12,counter:counter+window]
-    W = dataset[13,counter:counter+window]
-
-    T1 = dataset[7,counter:counter+window+1]
-    T2 = dataset[8,counter:counter+window+1]
-    T3 = dataset[9,counter:counter+window+1]
-    T4 = dataset[10,counter:counter+window+1]
-
-    # Outputs of neural network
-    P = dataset[0,counter+window+1]
-    Q = dataset[1,counter+window+1]
-    R = dataset[2,counter+window+1]
-
-
-    Udot = dataset[14,counter+window+1]
-    Vdot = dataset[15,counter+window+1]
-    Wdot = dataset[16,counter+window+1]
-
-    inputs = [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
-    outputs = [P,Q,R,Udot,Vdot,Wdot]
-
-    return [inputs,outputs]
-
+    return np.array(data), np.array(labels)
 
 # Load dataset
 def load_dataset(path_to_h5py):
@@ -181,6 +144,38 @@ def load_dataset(path_to_h5py):
     # print('{} contains: {}'.format(path_to_h5py,f.keys()))
     dataset = f['dataset']
     return dataset
+
+
+# Needs some cleaning
+def load_bad_tf_dataset(path2h5py,windowsize,train_split):
+
+    print('\n--------------------------------------------------------------')
+    print('Reading dataset file: {}'.format(path_to_h5py))
+    print('--------------------------------------------------------------')
+    f = h5py.File(path_to_h5py, 'r')
+    # print('{} contains: {}'.format(path_to_h5py,f.keys()))
+    dataset = f['dataset']
+
+
+    past_history = windowsize # Time window
+    future_target = 0  # How far in the future does the nn predict
+    STEP = 1 # Step between samples
+    TRAIN_SPLIT=train_split #
+
+    x_train, y_train = multivariate_data(dataset, dataset[:, 1], 0,
+                                                   TRAIN_SPLIT, past_history,
+                                                   future_target, STEP,
+                                                   single_step=True)
+
+    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+
+    return train_data_single
+
+def load_eff_tf_dataset():
+    pass
+
+
+
 
 def train_step(model, optimizer, x_train, y_train):
 
@@ -205,17 +200,18 @@ def test_step(model, x_test, y_test):
 train_dataset = load_dataset(dataset_path)
 forward_dynamics_model = create_model()
 #
-# loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
-# optimizer = tf.keras.optimizers.Adam()
+loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
+optimizer = tf.keras.optimizers.Adam()
 # counter = 0
 
 
 
-# for epoch in range(epochs):
-#     counter = 0
+for epoch in range(epochs):
+
+    counter = 0
 #
-#     for (x_train, y_train) in train_dataset:
-#         train_step(model, optimizer, x_train, y_train)
+    for (x_train, y_train) in train_dataset:
+        train_step(model, optimizer, x_train, y_train)
 #
 #     with train_summary_writer.as_default():
 #         tf.summary.scalar('loss', train_loss.result(), step=epoch)
