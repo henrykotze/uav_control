@@ -10,9 +10,9 @@ class beter_iterator(object):
         self.step = step
         self.windowsize = windowsize
         self.num_indices = 0
-        self.n = int(np.ceil(self.length/self.windowsize))
-        self.
+        self.n = 0
         self.length = length
+        self.num_batches = int(np.ceil(self.length/self.batchsize))
 
         self.x_indices = []
         self.y_indices = []
@@ -35,11 +35,11 @@ class beter_iterator(object):
         x_train = []
         y_train = []
         self.n += 1
-        if(self.n < self.num_indices):
-            for batch in range(self.batchsize):
+        if(self.n < self.num_batches):
+            for batch_counter in range(self.batchsize):
                 # meep.append([self.x_indices[self.n],self.y_indices[self.n]])
-                x_train.append(self.x_indices[self.n])
-                y_train.append(self.y_indices[self.n])
+                x_train.append(self.x_indices[self.n + batch_counter])
+                y_train.append(self.y_indices[self.n + batch_counter])
             # return [self.x_indices[self.n],self.y_indices[self.n]]
             return x_train,y_train
         else:
@@ -61,9 +61,9 @@ dataset[2,:] = x3
 
 length = 10
 shape = 3
-windowsize=5
+windowsize=2
 step=1
-batchsize=4
+batchsize=3
 
 meep = beter_iterator(length,shape,windowsize,step,batchsize)
 
