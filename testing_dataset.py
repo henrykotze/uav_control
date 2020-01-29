@@ -15,6 +15,30 @@ dataset[2,:] = x3
 # print(dataset)
 
 
+# Needs some cleaning
+def load_bad_tf_dataset(path2h5py,windowsize,train_split):
+
+    print('\n--------------------------------------------------------------')
+    print('Reading dataset file: {}'.format(path_to_h5py))
+    print('--------------------------------------------------------------')
+    f = h5py.File(path_to_h5py, 'r')
+    # print('{} contains: {}'.format(path_to_h5py,f.keys()))
+    dataset = f['dataset']
+
+
+    past_history = windowsize # Time window
+    future_target = 0  # How far in the future does the nn predict
+    STEP = 1 # Step between samples
+    TRAIN_SPLIT=train_split #
+
+    x_train, y_train = multivariate_data(dataset, dataset[:, 1], 0,
+                                                   TRAIN_SPLIT, past_history,
+                                                   future_target, STEP,
+                                                   single_step=True)
+
+    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+
+    return train_data_single
 
 
 

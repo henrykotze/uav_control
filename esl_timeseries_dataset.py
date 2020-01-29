@@ -3,6 +3,11 @@ import random
 
 
 class esl_timeseries_dataset(object):
+    '''
+    Holds entire N-dimensional timeseries dataset and iterates over
+    the dataset without keeping copies of entries within the dataset, by using
+    indices
+    '''
 
     def __init__(self,dataset,windowsize,step,batchsizes,shuffle=True):
 
@@ -12,12 +17,15 @@ class esl_timeseries_dataset(object):
         self.n = 0
         self.x_indices = []
         self.y_indices = []
-        self.dataset = dataset
-        self.shape = self.dataset.shape
-        self.total_samples = self.shape[1]
-        self.total_features = self.shape[0]
-        self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
         self.shuffle_dataset = shuffle
+
+
+        self.load_dataset(dataset)
+        # self.dataset = dataset
+        # self.shape = self.dataset.shape
+        # self.total_samples = self.shape[1]
+        # self.total_features = self.shape[0]
+        # self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
 
 
@@ -51,7 +59,6 @@ class esl_timeseries_dataset(object):
         return self
 
     def __next__(self):
-        # Need to work in batches
 
         x_train = np.zeros((self.batchsize,self.windowsize*self.total_features))
         y_train = np.zeros((self.batchsize,self.total_features))

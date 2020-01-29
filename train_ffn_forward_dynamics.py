@@ -19,6 +19,7 @@ import shelve
 import argparse
 import h5py
 from terminaltables import AsciiTable
+from esl_timeseries_dataset import esl_timeseries_dataset
 
 parser = argparse.ArgumentParser(\
         prog='Train a feedforward neural network for the forward dynamics of a drone',\
@@ -35,6 +36,7 @@ parser.add_argument('-lr', default=0.003, help='learning rate')
 parser.add_argument('-w_reg', default=0.003, help='weight regularistion')
 parser.add_argument('-Nt', default=10, help='window size')
 parser.add_argument('-batch', default=32, help='batch size')
+parser.add_argument('-step', default=1, help='step size between samples')
 
 
 args = parser.parse_args()
@@ -47,6 +49,7 @@ lr = float(vars(args)['lr'])
 weight_regularisation = float(vars(args)['w_reg'])
 window_size = int(vars(args)['Nt'])
 batch_size = int(vars(args)['batch'])
+step = int(vars(args)['step'])
 
 
 dataset_readme = dataset_path+'_readme'
@@ -64,8 +67,6 @@ table  = AsciiTable(data)
 table.inner_row_border = True
 print(table.table)
 
-# num_samples = data['dataset_num_entries']
-print(data)
 
 
 print('\n--------------------------------------------------------------')
@@ -84,149 +85,89 @@ with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
     db['learning_rate'] = lr
     db['weight_regularisation'] = weight_regularisation
     db['window_size'] = window_size
+    db['batch_size'] = batch_size
 
 
 db.close()
 
-#  Loss
+# CUSTOM TRAINING
 mae = tf.keras.losses.MeanAbsoluteError()
-# Weight regularistion
+optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
 
-train_loss = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
-train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy('train_accuracy')
-test_loss = tf.keras.metrics.Mean('test_loss', dtype=tf.float32)
-test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy('test_accuracy')
+#  METRICS
+train_loss = tf.keras.metrics.MeanAbsoluteError(name='train_loss', dtype=tf.float32)
+test_loss = tf.keras.metrics.MeanAbsoluteError(name='test_loss', dtype=tf.float32)
+train_precision = tf.keras.metrics.Precision(name='train_precision', dtype=tf.float32)
+test_precision = tf.keras.metrics.Precisioe(name='test_precision', dtype=tf.float32)
 
 # Building model
 def create_ffnn_model(input_shape=10):
+
     model = keras.Sequential([
     layers.Dense(200,input_shape=(input_shape,), dtype='float32',kernel_initializer='glorot_uniform'), \
     layers.ReLU(),\
-    layers.Dense(200,input_shape=(input_shape,), dtype='float32',kernel_initializer='glorot_uniform'), \
+    layers.Dense(200, dtype='float32',kernel_initializer='glorot_uniform'), \
     layers.ReLU(),\
     layers.Dense(6)])
+
     return model
 
 def create_lstm_model():
     pass
 
 
-# Needs some cleaning
-def multivariate_data(dataset, target, start_index, end_index, history_size, target_size, step, single_step=False):
-    data = []
-    labels = []
-
-    start_index = start_index + history_size
-    if end_index is None:
-        end_index = len(dataset) - target_size
-
-    for i in range(start_index, end_index):
-        indices = range(i-history_size, i, step)
-        # print(dataset[:,indices].flatten())
-        data.append(dataset[:,indices].flatten())
-
-        if single_step:
-            labels.append(dataset[:,i+target_size].flatten())
-            # print(labels)
-            # labels.append(target[i+target_size])
-        else:
-            labels.append(target[i:i+target_size])
-
-    return np.array(data), np.array(labels)
-
-# Load dataset
-def load_dataset(path_to_h5py):
-
-    print('\n--------------------------------------------------------------')
-    print('Reading dataset file: {}'.format(path_to_h5py))
-    print('--------------------------------------------------------------')
-    f = h5py.File(path_to_h5py, 'r')
-    # print('{} contains: {}'.format(path_to_h5py,f.keys()))
-    dataset = f['dataset']
-    return dataset
-
-
-# Needs some cleaning
-def load_bad_tf_dataset(path2h5py,windowsize,train_split):
-
-    print('\n--------------------------------------------------------------')
-    print('Reading dataset file: {}'.format(path_to_h5py))
-    print('--------------------------------------------------------------')
-    f = h5py.File(path_to_h5py, 'r')
-    # print('{} contains: {}'.format(path_to_h5py,f.keys()))
-    dataset = f['dataset']
-
-
-    past_history = windowsize # Time window
-    future_target = 0  # How far in the future does the nn predict
-    STEP = 1 # Step between samples
-    TRAIN_SPLIT=train_split #
-
-    x_train, y_train = multivariate_data(dataset, dataset[:, 1], 0,
-                                                   TRAIN_SPLIT, past_history,
-                                                   future_target, STEP,
-                                                   single_step=True)
-
-    train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-
-    return train_data_single
-
-def load_eff_tf_dataset():
-    pass
-
-
+def mae_and_weight_reg_loss(predictions,ground_truth,vars):
+    loss1 = mae(predictions,ground_truth)
+    loss2 = tf.add_n([tf.nn.l2_loss(v) for v in vars])*weight_regularisation
+    return loss1+loss2
 
 
 def train_step(model, optimizer, x_train, y_train):
 
   with tf.GradientTape() as tape:
     predictions = model(x_train, training=True)
-    loss = loss_object(y_train, predictions)
+    loss = mae_and_weight_reg_loss(y_train, predictions, model.trainable_variables)
 
   grads = tape.gradient(loss, model.trainable_variables)
   optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
   train_loss(loss)
-  train_accuracy(y_train, predictions)
 
 def test_step(model, x_test, y_test):
     predictions = model(x_test)
     loss = loss_object(y_test, predictions)
 
     test_loss(loss)
-    test_accuracy(y_test, predictions)
 
 
-train_dataset = load_dataset(dataset_path)
+train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size)
 forward_dynamics_model = create_model()
-#
-loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
-optimizer = tf.keras.optimizers.Adam()
-# counter = 0
-
-
 
 for epoch in range(epochs):
 
-    counter = 0
-#
     for (x_train, y_train) in train_dataset:
         train_step(model, optimizer, x_train, y_train)
 #
-#     with train_summary_writer.as_default():
-#         tf.summary.scalar('loss', train_loss.result(), step=epoch)
-#         tf.summary.scalar('accuracy', train_accuracy.result(), step=epoch)
+    with train_summary_writer.as_default():
+        tf.summary.scalar('loss', train_loss.result(), step=epoch)
 #
 #     for (x_test, y_test) in test_dataset:
 #         test_step(model, x_test, y_test)
 #
 #     with test_summary_writer.as_default():
 #         tf.summary.scalar('loss', test_loss.result(), step=epoch)
-#         tf.summary.scalar('accuracy', test_accuracy.result(), step=epoch)
 #
-#     template = 'Epoch {}, Loss: {}, Accuracy: {}, Test Loss: {}, Test Accuracy: {}'
-#     print (template.format(epoch+1,
-#                          train_loss.result(),
-#                          train_accuracy.result()*100,
-#                          test_loss.result(),
-#                          test_accuracy.result()*100))
+    template = 'Epoch {}, Loss: {}, Test Loss: {}'
+    print(template.format(epoch+1,
+                         train_loss.result(),
+                         test_loss.result()))
+
+
+
+
+with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
+
+    db['loss_of_training_dataset'] = train_loss.result()
+    db['loss_of_validatio_dataset'] = test_loss.result()
+
+db.close()
