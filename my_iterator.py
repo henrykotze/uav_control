@@ -1,54 +1,84 @@
 import numpy as np
+import random
 
 
+class esl_timeseries_dataset(object):
 
-class beter_iterator(object):
-
-    def __init__(self,length,shape,windowsize,step,batchsize):
+    def __init__(self,dataset,windowsize,step,batchsizes,shuffle=True):
 
         self.batchsize = batchsize
         self.step = step
         self.windowsize = windowsize
-        self.num_indices = 0
         self.n = 0
-        self.length = length
-        self.num_batches = int(np.ceil(self.length/self.batchsize))
-
         self.x_indices = []
         self.y_indices = []
+        self.dataset = dataset
+        self.shape = self.dataset.shape
+        self.total_samples = self.shape[1]
+        self.total_features = self.shape[0]
+        self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
+        self.shuffle_dataset = shuffle
+
+
+
+    def load_dataset(self,path_to_h5py):
+
+        print('\n--------------------------------------------------------------')
+        print('Reading dataset file: {}'.format(path_to_h5py))
+        print('--------------------------------------------------------------')
+        f = h5py.File(path_to_h5py, 'r')
+        # print('{} contains: {}'.format(path_to_h5py,f.keys()))
+        self.dataset = f['dataset']
+        self.shape = self.dataset.shape
+        self.total_samples = self.shape[1]
+        self.total_features = self.shape[0]
+        self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
     def __iter__(self):
+
         start_index = self.windowsize
 
-        for i in range(start_index, self.length):
-
+        for i in range(start_index, self.total_samples):
             indices = range(i-self.windowsize, i, self.step)
             (self.x_indices).append(indices)
             (self.y_indices).append(i)
 
         self.num_indices = len(self.x_indices)
 
+        if(self.shuffle_dataset):
+            self.shuffle()
+
         return self
 
     def __next__(self):
         # Need to work in batches
-        x_train = []
-        y_train = []
-        self.n += 1
+
+        x_train = np.zeros((self.batchsize,self.windowsize*self.total_features))
+        y_train = np.zeros((self.batchsize,self.total_features))
+
         if(self.n < self.num_batches):
+
             for batch_counter in range(self.batchsize):
-                # meep.append([self.x_indices[self.n],self.y_indices[self.n]])
-                x_train.append(self.x_indices[self.n + batch_counter])
-                y_train.append(self.y_indices[self.n + batch_counter])
-            # return [self.x_indices[self.n],self.y_indices[self.n]]
+
+                x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.n+batch_counter]].flatten()
+                y_train[batch_counter,:] = self.dataset[:,self.y_indices[self.n+batch_counter]].flatten()
+
+
+            self.n += self.batchsize
             return x_train,y_train
+
         else:
             raise StopIteration
 
 
-
     def shuffle(self):
-        pass
+        c = list(zip(self.x_indices,self.y_indices))
+        random.shuffle(c)
+        self.x_indices, self.y_indices = zip(*c)
+
+
+
+
 
 x1 = np.arange(0,10,1)
 x2 = np.arange(10,20,1)
@@ -59,15 +89,14 @@ dataset[0,:] = x1
 dataset[1,:] = x2
 dataset[2,:] = x3
 
-length = 10
-shape = 3
-windowsize=2
+windowsize=3
 step=1
 batchsize=3
 
-meep = beter_iterator(length,shape,windowsize,step,batchsize)
+meep = esl_timeseries_dataset(dataset,windowsize,step,batchsize)
 
-for [x_train, y_train] in meep:
-    # print(dataset[:,x_train])
+for x_train,y_train in meep:
+
     print(x_train)
-    # print(dataset[:,y_train].flatten())
+    print(y_train)
+    print('===============')
