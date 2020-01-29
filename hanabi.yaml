@@ -1,0 +1,9 @@
+# Information file about Hanabi
+drone:
+        name: hanabi
+        mass: 0.85
+        config: x
+        motor_thrust: 20
+        Ixx: 20
+        Iyy: 20
+        Izz: 20

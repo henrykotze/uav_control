@@ -9,6 +9,7 @@ import argparse
 import shelve
 import h5py
 from terminaltables import AsciiTable
+import yaml
 
 
 
@@ -34,29 +35,11 @@ addition_info = str(vars(args)['add_info'])
 dataset_name = str(vars(args)['dataset_name'])
 dataset_loc = str(vars(args)['dataset_loc'])
 
-drone_file = open(drone_file_path,"r")
-drone_str = drone_file.readlines()[2].split(";")[0:-1]
-drone_info = [str(i) for i in drone_str]
-drone_file.close()
 
-
-print("===============================")
-print("DRONE INFO")
-print("===============================")
-print("{:<15} {:<10}".format("name:", drone_info[0]))
-print("{:<15} {:<10}".format("mass:", drone_info[1]))
-print("{:<15} {:<10}".format("Ixx:", drone_info[2]))
-print("{:<15} {:<10}".format("Iyy:", drone_info[3]))
-print("{:<15} {:<10}".format("Izz:", drone_info[4]))
-print("{:<15} {:<10}".format("R_Ld:", drone_info[5]))
-print("{:<15} {:<10}".format("r_D:", drone_info[6]))
-print("{:<15} {:<10}".format("tau:", drone_info[7]))
-print("{:<15} {:<10}".format("motor thrust:", drone_info[8]))
-print("{:<15} {:<10}".format("config:", drone_info[9]))
-print("===============================")
-print("===============================")
-
-motor_thrust = float(drone_info[8])
+yamlfile = open(drone_file_path,'r')
+drone_info = yaml.load(yamlfile,Loader=yaml.Loader)
+drone_name = str(drone_info['drone']['name'])
+motor_thrust = float(drone_info['drone']['motor_thrust'])
 
 
 def convertInertia2Body(q,inertia):
@@ -395,7 +378,8 @@ with shelve.open( str(dataset_loc + '/'+dataset_name+'_readme')) as db:
 
     db['dataset_num_entries'] = counter
     db['numOfLogs'] = len(listOfLogs)
-    db['drone_info'] = str(drone_info)
+    db['drone_name'] = drone_name
+    db['motor_thrust'] = motor_thrust
     db['addition_information'] = str(addition_info)
 
 

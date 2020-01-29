@@ -87,23 +87,23 @@ class esl_timeseries_dataset(object):
 
 
 
-x1 = np.arange(0,10,1)
-x2 = np.arange(10,20,1)
-x3 = np.arange(20,30,1)
-
-dataset = np.zeros((3,10))
-dataset[0,:] = x1
-dataset[1,:] = x2
-dataset[2,:] = x3
-
-windowsize=3
-step=1
-batchsize=3
-
-meep = esl_timeseries_dataset(dataset,windowsize,step,batchsize)
-
-for x_train,y_train in meep:
-
-    print(x_train)
-    print(y_train)
-    print('===============')
+# x1 = np.arange(0,10,1)
+# x2 = np.arange(10,20,1)
+# x3 = np.arange(20,30,1)
+#
+# dataset = np.zeros((3,10))
+# dataset[0,:] = x1
+# dataset[1,:] = x2
+# dataset[2,:] = x3
+#
+# windowsize=3
+# step=1
+# batchsize=3
+#
+# meep = esl_timeseries_dataset(dataset,windowsize,step,batchsize)
+#
+# for x_train,y_train in meep:
+#
+#     print(x_train)
+#     print(y_train)
+#     print('===============')

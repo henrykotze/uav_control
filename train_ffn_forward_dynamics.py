@@ -1,25 +1,17 @@
 #!/usr/bin/env python3
 
 
-import scipy.integrate as spi
 import tensorflow as tf
 import numpy as np
-# from tensorflow.python.ops import math_ops
-import matplotlib.pyplot as plt
 from tensorflow import keras
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-mpl.use('tkagg')
 from tensorflow.keras import layers
-import pickle
 from tensorflow import contrib
 import argparse
 import sys
 import shelve
-import argparse
 import h5py
-from terminaltables import AsciiTable
 from esl_timeseries_dataset import esl_timeseries_dataset
+from terminaltables import AsciiTable
 
 parser = argparse.ArgumentParser(\
         prog='Train a feedforward neural network for the forward dynamics of a drone',\
@@ -92,7 +84,7 @@ db.close()
 
 # CUSTOM TRAINING
 mae = tf.keras.losses.MeanAbsoluteError()
-optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
+optimizer = tf.keras.optimizers.Adam(lr)
 
 #  METRICS
 train_loss = tf.keras.metrics.MeanAbsoluteError(name='train_loss', dtype=tf.float32)
