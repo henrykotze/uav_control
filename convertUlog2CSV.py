@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(\
 
 
 parser.add_argument('-logdir', default='./logs/', help='path to the logs parent direcory')
-parser.add_argument('-drone', default='./griffin.txt', help='path to the file containing drone corresponding to logs')
+parser.add_argument('-drone', default='./griffin.yaml', help='path to the file containing drone corresponding to logs')
 parser.add_argument('-add_info', default='', help='add additional information')
 parser.add_argument('-dataset_name', default='dataset', help='name of saved dataset')
 parser.add_argument('-dataset_loc', default='./', help='path to where dataset is saved')

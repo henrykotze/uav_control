@@ -1,0 +1,9 @@
+# Information regarding a drone
+drone:
+        name: slade
+        mass: 15
+        Ixx: 0.5
+        Iyy: 0.5
+        Izz: 0.85
+        config: x
+        motor_thrust: 20

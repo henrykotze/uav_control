@@ -1,3 +1,0 @@
-Information of Drone
-# mass;Ixx;Iyy;Izz;R_LD;d;r_D;tau;config;
-15;0.5;0.5;0.85;10;0.465;0.18;0.125;+;
