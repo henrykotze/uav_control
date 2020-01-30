@@ -1,5 +1,5 @@
 import numpy as np
-# import tensorflow as tf
+import tensorflow as tf
 
 
 
@@ -79,7 +79,13 @@ x_train_single, y_train_single = multivariate_data(dataset, dataset[:, 1], 0,
                                                    future_target, STEP,
                                                    single_step=True)
 
+train_data_single = tf.data.Dataset.from_tensor_slices((x_train_single, y_train_single))
+train_data_single = train_data_single.cache().batch(2)
 
+
+
+for x,y in train_data_single:
+    print(x)
 
 # print('Single window of past history : {}'.format(x_train_single[0].shape))
 

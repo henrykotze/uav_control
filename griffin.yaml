@@ -1,0 +1,9 @@
+# Information for a drone
+drone:
+        name: griffin
+        mass: 4.5
+        config: x
+        motor_thrust: 20
+        Ixx: 0.23 
+        Iyy: 0
+        Izz: 0.235

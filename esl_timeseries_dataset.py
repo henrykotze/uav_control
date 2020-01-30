@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import h5py
+import tensorflow as tf
 
 
 class esl_timeseries_dataset(object):
@@ -9,7 +11,7 @@ class esl_timeseries_dataset(object):
     indices
     '''
 
-    def __init__(self,dataset,windowsize,step,batchsizes,shuffle=True):
+    def __init__(self,dataset,windowsize,step,batchsize,shuffle=True):
 
         self.batchsize = batchsize
         self.step = step
@@ -27,7 +29,8 @@ class esl_timeseries_dataset(object):
         # self.total_features = self.shape[0]
         # self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
-
+    def get_input_shape(self):
+        return int(self.windowsize*self.total_features)
 
     def load_dataset(self,path_to_h5py):
 
@@ -75,6 +78,7 @@ class esl_timeseries_dataset(object):
             return x_train,y_train
 
         else:
+            self.n = 0
             raise StopIteration
 
 
@@ -82,6 +86,9 @@ class esl_timeseries_dataset(object):
         c = list(zip(self.x_indices,self.y_indices))
         random.shuffle(c)
         self.x_indices, self.y_indices = zip(*c)
+        self.x_indices = list(self.x_indices)
+        self.y_indices = list(self.y_indices)
+        # print(self.x_indices)
 
 
 

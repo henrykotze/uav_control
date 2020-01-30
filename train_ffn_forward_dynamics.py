@@ -12,6 +12,7 @@ import shelve
 import h5py
 from esl_timeseries_dataset import esl_timeseries_dataset
 from terminaltables import AsciiTable
+from tqdm import tnrange, trange
 
 parser = argparse.ArgumentParser(\
         prog='Train a feedforward neural network for the forward dynamics of a drone',\
@@ -42,9 +43,12 @@ weight_regularisation = float(vars(args)['w_reg'])
 window_size = int(vars(args)['Nt'])
 batch_size = int(vars(args)['batch'])
 step = int(vars(args)['step'])
-
-
 dataset_readme = dataset_path+'_readme'
+
+print('----------------------------------------------------------------')
+print("TensorFlow version: {}".format(tf.__version__))
+print("Eager execution: {}".format(tf.executing_eagerly()))
+print('----------------------------------------------------------------')
 
 
 print('----------------------------------------------------------------')
@@ -84,23 +88,21 @@ db.close()
 
 # CUSTOM TRAINING
 mae = tf.keras.losses.MeanAbsoluteError()
-optimizer = tf.keras.optimizers.Adam(lr)
+optimizer = tf.keras.optimizers.Adam()
 
 #  METRICS
-train_loss = tf.keras.metrics.MeanAbsoluteError(name='train_loss', dtype=tf.float32)
+train_mean = tf.keras.metrics.Mean()
 test_loss = tf.keras.metrics.MeanAbsoluteError(name='test_loss', dtype=tf.float32)
 train_precision = tf.keras.metrics.Precision(name='train_precision', dtype=tf.float32)
-test_precision = tf.keras.metrics.Precisioe(name='test_precision', dtype=tf.float32)
 
 # Building model
 def create_ffnn_model(input_shape=10):
 
     model = keras.Sequential([
-    layers.Dense(200,input_shape=(input_shape,), dtype='float32',kernel_initializer='glorot_uniform'), \
+    layers.Dense(100,input_shape=(input_shape,),dtype=tf.float64), \
     layers.ReLU(),\
-    layers.Dense(200, dtype='float32',kernel_initializer='glorot_uniform'), \
-    layers.ReLU(),\
-    layers.Dense(6)])
+    layers.Dense(17,dtype=tf.float64)
+    ])
 
     return model
 
@@ -123,7 +125,7 @@ def train_step(model, optimizer, x_train, y_train):
   grads = tape.gradient(loss, model.trainable_variables)
   optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-  train_loss(loss)
+  train_mean(loss)
 
 def test_step(model, x_test, y_test):
     predictions = model(x_test)
@@ -133,33 +135,29 @@ def test_step(model, x_test, y_test):
 
 
 train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size)
-forward_dynamics_model = create_model()
+forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
 
+# for epoch in trange(epochs):
 for epoch in range(epochs):
-
-    for (x_train, y_train) in train_dataset:
-        train_step(model, optimizer, x_train, y_train)
-#
-    with train_summary_writer.as_default():
-        tf.summary.scalar('loss', train_loss.result(), step=epoch)
-#
-#     for (x_test, y_test) in test_dataset:
-#         test_step(model, x_test, y_test)
-#
-#     with test_summary_writer.as_default():
-#         tf.summary.scalar('loss', test_loss.result(), step=epoch)
-#
-    template = 'Epoch {}, Loss: {}, Test Loss: {}'
-    print(template.format(epoch+1,
-                         train_loss.result(),
-                         test_loss.result()))
-
+    for x_train, y_train in train_dataset:
+        train_step(forward_dynamics_model, optimizer, x_train, y_train)
+# #
+#     with train_summary_writer.as_default():
+#         tf.summary.scalar('loss', train_loss.result(), step=epoch)
+# #
+# #     for (x_test, y_test) in test_dataset:
+# #         test_step(model, x_test, y_test)
+# #
+# #     with test_summary_writer.as_default():
+# #         tf.summary.scalar('loss', test_loss.result(), step=epoch)
+# #
+    print("Epoch {}, mae: {}".format(epoch+1,train_mean.result()))
 
 
 
 with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
 
-    db['loss_of_training_dataset'] = train_loss.result()
-    db['loss_of_validatio_dataset'] = test_loss.result()
+    db['mean_of_model'] = train_mean.result()
+    # db['loss_of_validatio_dataset'] = test_loss.result()
 
 db.close()
