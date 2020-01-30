@@ -93,7 +93,6 @@ optimizer = tf.keras.optimizers.Adam()
 #  METRICS
 train_mean = tf.keras.metrics.Mean()
 test_loss = tf.keras.metrics.MeanAbsoluteError(name='test_loss', dtype=tf.float32)
-train_precision = tf.keras.metrics.Precision(name='train_precision', dtype=tf.float32)
 
 # Building model
 def create_ffnn_model(input_shape=10):
