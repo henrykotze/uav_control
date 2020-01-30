@@ -11,7 +11,7 @@ class esl_timeseries_dataset(object):
     indices
     '''
 
-    def __init__(self,dataset,windowsize,step,batchsize,shuffle=True):
+    def __init__(self,dataset,windowsize,step,batchsize,input_indices,ouput_indices,shuffle=True):
 
         self.batchsize = batchsize
         self.step = step
@@ -20,14 +20,17 @@ class esl_timeseries_dataset(object):
         self.x_indices = []
         self.y_indices = []
         self.shuffle_dataset = shuffle
+        self.input_indices = input_indices
+        self.output_indices = output_indices
 
 
-        self.load_dataset(dataset)
-        # self.dataset = dataset
-        # self.shape = self.dataset.shape
-        # self.total_samples = self.shape[1]
-        # self.total_features = self.shape[0]
-        # self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
+        # self.load_dataset(dataset)
+        self.dataset = dataset
+        self.shape = self.dataset.shape
+        self.total_samples = self.shape[1]
+        self.total_features = len(self.input_indices)
+        self.total_labels = len(self.output_indices)
+        self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
     def get_input_shape(self):
         return int(self.windowsize*self.total_features)
@@ -42,7 +45,8 @@ class esl_timeseries_dataset(object):
         self.dataset = f['dataset']
         self.shape = self.dataset.shape
         self.total_samples = self.shape[1]
-        self.total_features = self.shape[0]
+        self.total_features = len(self.input_indices)
+        self.total_labels = len(self.output_indices)
         self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
     def __iter__(self):
@@ -64,14 +68,14 @@ class esl_timeseries_dataset(object):
     def __next__(self):
 
         x_train = np.zeros((self.batchsize,self.windowsize*self.total_features))
-        y_train = np.zeros((self.batchsize,self.total_features))
+        y_train = np.zeros((self.batchsize,self.total_labels))
 
         if(self.n < self.num_batches):
 
             for batch_counter in range(self.batchsize):
 
-                x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.n+batch_counter]].flatten()
-                y_train[batch_counter,:] = self.dataset[:,self.y_indices[self.n+batch_counter]].flatten()
+                x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.n+batch_counter]][:,self.input_indices].flatten()
+                y_train[batch_counter,:] = self.dataset[:,self.y_indices[self.n+batch_counter]][:,self.output_indices].flatten()
 
 
             self.n += self.batchsize
@@ -94,23 +98,26 @@ class esl_timeseries_dataset(object):
 
 
 
-# x1 = np.arange(0,10,1)
-# x2 = np.arange(10,20,1)
-# x3 = np.arange(20,30,1)
-#
-# dataset = np.zeros((3,10))
-# dataset[0,:] = x1
-# dataset[1,:] = x2
-# dataset[2,:] = x3
-#
-# windowsize=3
-# step=1
-# batchsize=3
-#
-# meep = esl_timeseries_dataset(dataset,windowsize,step,batchsize)
-#
-# for x_train,y_train in meep:
-#
-#     print(x_train)
-#     print(y_train)
-#     print('===============')
+x1 = np.arange(0,10,1)
+x2 = np.arange(10,20,1)
+x3 = np.arange(20,30,1)
+
+dataset = np.zeros((3,10))
+dataset[0,:] = x1
+dataset[1,:] = x2
+dataset[2,:] = x3
+
+input_indices=[0,1,2,3]
+output_indices=[4,5,6,7,9]
+
+windowsize=3
+step=1
+batchsize=3
+
+meep = esl_timeseries_dataset(dataset,windowsize,step,batchsize,input_indices,output_indices,shuffle=False)
+
+for x_train,y_train in meep:
+
+    print(x_train)
+    print(y_train)
+    print('===============')
