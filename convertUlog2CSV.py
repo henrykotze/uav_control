@@ -281,20 +281,40 @@ for ulog_entry in tqdm(listOfLogs):
     T4 = (PWM_3_/1000 - 1)*motor_thrust*9.81
 
 
-    dataset[0,counter:counter + size_local_position] = P_
-    dataset[1,counter:counter + size_local_position] = Q_
-    dataset[2,counter:counter + size_local_position] = R_
-    dataset[3,counter:counter + size_local_position] = q1_
-    dataset[4,counter:counter + size_local_position] = q2_
-    dataset[5,counter:counter + size_local_position] = q3_
-    dataset[6,counter:counter + size_local_position] = q4_
+    # dataset[0,counter:counter + size_local_position] = P_
+    # dataset[1,counter:counter + size_local_position] = Q_
+    # dataset[2,counter:counter + size_local_position] = R_
+    # dataset[3,counter:counter + size_local_position] = q1_
+    # dataset[4,counter:counter + size_local_position] = q2_
+    # dataset[5,counter:counter + size_local_position] = q3_
+    # dataset[6,counter:counter + size_local_position] = q4_
+    # dataset[7,counter:counter + size_local_position] = T1
+    # dataset[8,counter:counter + size_local_position] = T2
+    # dataset[9,counter:counter + size_local_position] = T3
+    # dataset[10,counter:counter + size_local_position] = T4
+    # dataset[11,counter:counter + size_local_position] = U_
+    # dataset[12,counter:counter + size_local_position] = V_
+    # dataset[13,counter:counter + size_local_position] = W_
+    # dataset[14,counter:counter + size_local_position] = Udot
+    # dataset[15,counter:counter + size_local_position] = Vdot
+    # dataset[16,counter:counter + size_local_position] = Wdot
+
+
+
+    dataset[0,counter:counter + size_local_position] = q1
+    dataset[1,counter:counter + size_local_position] = q2
+    dataset[2,counter:counter + size_local_position] = q3
+    dataset[3,counter:counter + size_local_position] = q4
+    dataset[4,counter:counter + size_local_position] = U_
+    dataset[5,counter:counter + size_local_position] = V_
+    dataset[6,counter:counter + size_local_position] = W_
     dataset[7,counter:counter + size_local_position] = T1
     dataset[8,counter:counter + size_local_position] = T2
     dataset[9,counter:counter + size_local_position] = T3
     dataset[10,counter:counter + size_local_position] = T4
-    dataset[11,counter:counter + size_local_position] = U_
-    dataset[12,counter:counter + size_local_position] = V_
-    dataset[13,counter:counter + size_local_position] = W_
+    dataset[11,counter:counter + size_local_position] = P_
+    dataset[12,counter:counter + size_local_position] = Q_
+    dataset[13,counter:counter + size_local_position] = R_
     dataset[14,counter:counter + size_local_position] = Udot
     dataset[15,counter:counter + size_local_position] = Vdot
     dataset[16,counter:counter + size_local_position] = Wdot

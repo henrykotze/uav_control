@@ -24,13 +24,13 @@ class esl_timeseries_dataset(object):
         self.output_indices = output_indices
 
 
-        # self.load_dataset(dataset)
-        self.dataset = dataset
-        self.shape = self.dataset.shape
-        self.total_samples = self.shape[1]
-        self.total_inputs = len(self.input_indices)
-        self.total_labels = len(self.output_indices)
-        self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
+        self.load_dataset(dataset)
+        # self.dataset = dataset
+        # self.shape = self.dataset.shape
+        # self.total_samples = self.shape[1]
+        # self.total_inputs = len(self.input_indices)
+        # self.total_labels = len(self.output_indices)
+        # self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
     def get_input_shape(self):
         return int(self.windowsize*self.total_features)
@@ -74,15 +74,8 @@ class esl_timeseries_dataset(object):
 
             for batch_counter in range(self.batchsize):
 
-                # print(self.dataset[:,self.x_indices[self.n+batch_counter]][self.input_indices])
-                # print(self.dataset[:,self.y_indices[self.n+batch_counter]][self.output_indices])
-
-                # x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.n+batch_counter]].flatten()
-                # y_train[batch_counter,:] = self.dataset[:,self.y_indices[self.n+batch_counter]].flatten()
-
                 x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.n+batch_counter]][self.input_indices].flatten()
                 y_train[batch_counter,:] = self.dataset[:,self.y_indices[self.n+batch_counter]][self.output_indices]
-
 
 
             self.n += self.batchsize

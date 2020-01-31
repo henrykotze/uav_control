@@ -133,6 +133,11 @@ def test_step(model, x_test, y_test):
     test_loss(loss)
 
 
+
+# [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
+input_indices=
+# [P,Q,R,Udot,Vdot,Wdot]
+output_indices=
 train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size)
 forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
 
