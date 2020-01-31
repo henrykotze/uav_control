@@ -135,9 +135,9 @@ def test_step(model, x_test, y_test):
 
 
 # [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
-input_indices=
+input_indices= [0,1,2,3,4,5,6,7,8,9,10]
 # [P,Q,R,Udot,Vdot,Wdot]
-output_indices=
+output_indices= [11, 12, 13, 14, 15, 16]
 train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size)
 forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
 

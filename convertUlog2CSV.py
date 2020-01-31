@@ -301,16 +301,16 @@ for ulog_entry in tqdm(listOfLogs):
 
 
 
-    dataset[0,counter:counter + size_local_position] = q1
-    dataset[1,counter:counter + size_local_position] = q2
-    dataset[2,counter:counter + size_local_position] = q3
-    dataset[3,counter:counter + size_local_position] = q4
-    dataset[4,counter:counter + size_local_position] = U_
-    dataset[5,counter:counter + size_local_position] = V_
-    dataset[6,counter:counter + size_local_position] = W_
-    dataset[7,counter:counter + size_local_position] = T1
-    dataset[8,counter:counter + size_local_position] = T2
-    dataset[9,counter:counter + size_local_position] = T3
+    dataset[0,counter:counter  + size_local_position] = q1
+    dataset[1,counter:counter  + size_local_position] = q2
+    dataset[2,counter:counter  + size_local_position] = q3
+    dataset[3,counter:counter  + size_local_position] = q4
+    dataset[4,counter:counter  + size_local_position] = U_
+    dataset[5,counter:counter  + size_local_position] = V_
+    dataset[6,counter:counter  + size_local_position] = W_
+    dataset[7,counter:counter  + size_local_position] = T1
+    dataset[8,counter:counter  + size_local_position] = T2
+    dataset[9,counter:counter  + size_local_position] = T3
     dataset[10,counter:counter + size_local_position] = T4
     dataset[11,counter:counter + size_local_position] = P_
     dataset[12,counter:counter + size_local_position] = Q_
@@ -320,14 +320,8 @@ for ulog_entry in tqdm(listOfLogs):
     dataset[16,counter:counter + size_local_position] = Wdot
 
 
-    # print(counter, size_local_position)
-
-
     for csvFile in listOfCSVs:
         os.remove(csvFile)
-
-
-
 
     # perhaps delete *.csv
     counter += size_local_position
@@ -336,33 +330,49 @@ for ulog_entry in tqdm(listOfLogs):
         dataset_num_entries += 1000000
         dataset = np.hstack((dataset,np.zeros(features,1000000)))
 
-
-
-
 # resize dataset by using counter variable
 dataset = np.delete(dataset,slice(counter,dataset_num_entries,1),1)
 
-maxP = np.amax(dataset[0,:])
-maxQ = np.amax(dataset[1,:])
-maxR = np.amax(dataset[2,:])
+max_q1 = np.amax(dataset[0,:])
+max_q2 = np.amax(dataset[1,:])
+max_q3 = np.amax(dataset[2,:])
+max_q4 = np.amax(dataset[3,:])
 
-max_q1 = np.amax(dataset[3,:])
-max_q2 = np.amax(dataset[4,:])
-max_q3 = np.amax(dataset[5,:])
-max_q4 = np.amax(dataset[6,:])
+maxU = np.amax(dataset[4,:])
+maxV = np.amax(dataset[5,:])
+maxW = np.amax(dataset[6,:])
 
 max_T1 = np.amax(dataset[7,:])
 max_T2 = np.amax(dataset[8,:])
 max_T3 = np.amax(dataset[9,:])
 max_T4 = np.amax(dataset[10,:])
 
-maxU = np.amax(dataset[11,:])
-maxV = np.amax(dataset[12,:])
-maxW = np.amax(dataset[13,:])
+maxP = np.amax(dataset[11,:])
+maxQ = np.amax(dataset[12,:])
+maxR = np.amax(dataset[13,:])
 
 maxUdot = np.amax(dataset[14,:])
 maxVdot = np.amax(dataset[15,:])
 maxWdot = np.amax(dataset[16,:])
+
+
+dataset[0,:] = dataset[0,:]/max_q1
+dataset[1,:] = dataset[1,:]/max_q2
+dataset[2,:] = dataset[2,:]/max_q3
+dataset[3,:] = dataset[3,:]/max_q4
+dataset[4,:] = dataset[4,:]/maxU
+dataset[5,:] = dataset[5,:]/maxV
+dataset[6,:] = dataset[6,:]/maxW
+dataset[7,:] = dataset[7,:]/max_T1
+dataset[8,:] = dataset[8,:]/max_T2
+dataset[9,:] = dataset[9,:]/max_T3
+dataset[10,:] = dataset[10,:]/max_T4
+dataset[11,:] = dataset[11,:]/maxP
+dataset[12,:] = dataset[12,:]/maxQ
+dataset[13,:] = dataset[13,:]/maxR
+dataset[14,:] = dataset[14,:]/maxUdot
+dataset[15,:] = dataset[15,:]/maxVdot
+dataset[16,:] = dataset[16,:]/maxWdot
 
 
 

@@ -24,13 +24,13 @@ class esl_timeseries_dataset(object):
         self.output_indices = output_indices
 
 
-        self.load_dataset(dataset)
-        # self.dataset = dataset
-        # self.shape = self.dataset.shape
-        # self.total_samples = self.shape[1]
-        # self.total_inputs = len(self.input_indices)
-        # self.total_labels = len(self.output_indices)
-        # self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
+        # self.load_dataset(dataset)
+        self.dataset = dataset
+        self.shape = self.dataset.shape
+        self.total_samples = self.shape[1]
+        self.total_inputs = len(self.input_indices)
+        self.total_labels = len(self.output_indices)
+        self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
     def get_input_shape(self):
         return int(self.windowsize*self.total_features)
@@ -112,6 +112,10 @@ dataset[2,:] = x3
 dataset[3,:] = x4
 dataset[4,:] = x5
 dataset[5,:] = x6
+
+print(dataset)
+dataset[0,:] = dataset[0,:]/10
+print(dataset)
 
 input_indices=[0,1,5]
 output_indices=[4,5]
