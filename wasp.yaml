@@ -1,0 +1,8 @@
+# Information regarding a drone
+drone:
+        name: wasp
+        mass: 0.66
+        Ixx: 1.326e-3
+        Iyy: 9.3e-4
+        Izz: 1.95e-3
+        motor_thrust: 20
