@@ -298,13 +298,13 @@ for ulog_entry in tqdm(listOfLogs):
     # dataset[14,counter:counter + size_local_position] = Udot
     # dataset[15,counter:counter + size_local_position] = Vdot
     # dataset[16,counter:counter + size_local_position] = Wdot
+    #
 
 
-
-    dataset[0,counter:counter  + size_local_position] = q1
-    dataset[1,counter:counter  + size_local_position] = q2
-    dataset[2,counter:counter  + size_local_position] = q3
-    dataset[3,counter:counter  + size_local_position] = q4
+    dataset[0,counter:counter  + size_local_position] = q1_
+    dataset[1,counter:counter  + size_local_position] = q2_
+    dataset[2,counter:counter  + size_local_position] = q3_
+    dataset[3,counter:counter  + size_local_position] = q4_
     dataset[4,counter:counter  + size_local_position] = U_
     dataset[5,counter:counter  + size_local_position] = V_
     dataset[6,counter:counter  + size_local_position] = W_
@@ -356,10 +356,10 @@ maxVdot = np.amax(dataset[15,:])
 maxWdot = np.amax(dataset[16,:])
 
 
-dataset[0,:] = dataset[0,:]/max_q1
-dataset[1,:] = dataset[1,:]/max_q2
-dataset[2,:] = dataset[2,:]/max_q3
-dataset[3,:] = dataset[3,:]/max_q4
+dataset[0,:] = dataset[0,:]
+dataset[1,:] = dataset[1,:]
+dataset[2,:] = dataset[2,:]
+dataset[3,:] = dataset[3,:]
 dataset[4,:] = dataset[4,:]/maxU
 dataset[5,:] = dataset[5,:]/maxV
 dataset[6,:] = dataset[6,:]/maxW

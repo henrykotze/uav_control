@@ -24,13 +24,13 @@ class esl_timeseries_dataset(object):
         self.output_indices = output_indices
 
 
-        # self.load_dataset(dataset)
-        self.dataset = dataset
-        self.shape = self.dataset.shape
-        self.total_samples = self.shape[1]
-        self.total_inputs = len(self.input_indices)
-        self.total_labels = len(self.output_indices)
-        self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
+        self.load_dataset(dataset)
+        # self.dataset = dataset
+        # self.shape = self.dataset.shape
+        # self.total_samples = self.shape[1]
+        # self.total_inputs = len(self.input_indices)
+        # self.total_labels = len(self.output_indices)
+        # self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
     def get_input_shape(self):
         return int(self.windowsize*self.total_features)
@@ -97,37 +97,37 @@ class esl_timeseries_dataset(object):
 
 
 
-
-x1 = np.arange(0,10,1)
-x2 = np.arange(10,20,1)
-x3 = np.arange(20,30,1)
-x4 = np.arange(30,40,1)
-x5 = np.arange(40,50,1)
-x6 = np.arange(50,60,1)
-
-dataset = np.zeros((6,10))
-dataset[0,:] = x1
-dataset[1,:] = x2
-dataset[2,:] = x3
-dataset[3,:] = x4
-dataset[4,:] = x5
-dataset[5,:] = x6
-
-print(dataset)
-dataset[0,:] = dataset[0,:]/10
-print(dataset)
-
-input_indices=[0,1,5]
-output_indices=[4,5]
-
-windowsize=2
-step=1
-batchsize=3
-
-meep = esl_timeseries_dataset(dataset,windowsize,step,batchsize,input_indices,output_indices,shuffle=False)
-
-for x_train,y_train in meep:
-
-    print(x_train)
-    print(y_train)
-    print('===============')
+#
+# x1 = np.arange(0,10,1)
+# x2 = np.arange(10,20,1)
+# x3 = np.arange(20,30,1)
+# x4 = np.arange(30,40,1)
+# x5 = np.arange(40,50,1)
+# x6 = np.arange(50,60,1)
+#
+# dataset = np.zeros((6,10))
+# dataset[0,:] = x1
+# dataset[1,:] = x2
+# dataset[2,:] = x3
+# dataset[3,:] = x4
+# dataset[4,:] = x5
+# dataset[5,:] = x6
+#
+# print(dataset)
+# dataset[0,:] = dataset[0,:]/10
+# print(dataset)
+#
+# input_indices=[0,1,5]
+# output_indices=[4,5]
+#
+# windowsize=2
+# step=1
+# batchsize=3
+#
+# meep = esl_timeseries_dataset(dataset,windowsize,step,batchsize,input_indices,output_indices,shuffle=False)
+#
+# for x_train,y_train in meep:
+#
+#     print(x_train)
+#     print(y_train)
+#     print('===============')
