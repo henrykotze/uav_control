@@ -6,12 +6,11 @@ import tensorflow as tf
 
 class esl_timeseries_dataset(object):
     '''
-    Holds entire N-dimensional timeseries dataset and iterates over
-    the dataset without keeping copies of entries within the dataset, by using
-    indices
+    Holds entire N-dimensional timeseries dataset and iterates more efficient
+    over the dataset
     '''
 
-    def __init__(self,dataset,windowsize,step,batchsize,input_indices,ouput_indices,shuffle=True):
+    def __init__(self,dataset,windowsize,step,batchsize,input_indices,output_indices,shuffle=True):
 
         self.batchsize = batchsize
         self.step = step
@@ -33,7 +32,7 @@ class esl_timeseries_dataset(object):
         # self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
     def get_input_shape(self):
-        return int(self.windowsize*self.total_features)
+        return int(self.windowsize*self.total_inputs)
 
     def load_dataset(self,path_to_h5py):
 

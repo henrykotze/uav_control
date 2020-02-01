@@ -229,17 +229,17 @@ for ulog_entry in tqdm(listOfLogs):
     # not all entries are written at the same time in the log file, thus we
     # will align them all by assign them to closet entry that corresponds in the
     # local_position log
-    P_ = np.zeros(len(timestamp_local_position))
-    Q_ = np.zeros(len(timestamp_local_position))
-    R_ = np.zeros(len(timestamp_local_position))
-    q1_ = np.zeros(len(timestamp_local_position))
-    q2_ = np.zeros(len(timestamp_local_position))
-    q3_ = np.zeros(len(timestamp_local_position))
-    q4_ = np.zeros(len(timestamp_local_position))
-    PWM_0_ = np.zeros(len(timestamp_local_position))
-    PWM_1_ = np.zeros(len(timestamp_local_position))
-    PWM_2_ = np.zeros(len(timestamp_local_position))
-    PWM_3_ = np.zeros(len(timestamp_local_position))
+    P_ = np.zeros(len(timestamp_local_position),dtype=float)
+    Q_ = np.zeros(len(timestamp_local_position),dtype=float)
+    R_ = np.zeros(len(timestamp_local_position),dtype=float)
+    q1_ = np.zeros(len(timestamp_local_position),dtype=float)
+    q2_ = np.zeros(len(timestamp_local_position),dtype=float)
+    q3_ = np.zeros(len(timestamp_local_position),dtype=float)
+    q4_ = np.zeros(len(timestamp_local_position),dtype=float)
+    PWM_0_ = np.zeros(len(timestamp_local_position),dtype=float)
+    PWM_1_ = np.zeros(len(timestamp_local_position),dtype=float)
+    PWM_2_ = np.zeros(len(timestamp_local_position),dtype=float)
+    PWM_3_ = np.zeros(len(timestamp_local_position),dtype=float)
 
     time_keeper = 0
 

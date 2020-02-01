@@ -100,13 +100,11 @@ def create_ffnn_model(input_shape=10):
     model = keras.Sequential([
     layers.Dense(100,input_shape=(input_shape,),dtype=tf.float64), \
     layers.ReLU(),\
-    layers.Dense(17,dtype=tf.float64)
+    layers.Dense(6,dtype=tf.float64)
     ])
 
     return model
 
-def create_lstm_model():
-    pass
 
 
 def mae_and_weight_reg_loss(predictions,ground_truth,vars):
@@ -135,10 +133,13 @@ def test_step(model, x_test, y_test):
 
 
 # [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
-input_indices= [0,1,2,3,4,5,6,7,8,9,10]
+input_indices= [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 # [P,Q,R,Udot,Vdot,Wdot]
 output_indices= [11, 12, 13, 14, 15, 16]
-train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size)
+train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size,
+                                        input_indices,output_indices)
+
+                                        
 forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
 
 # for epoch in trange(epochs):
