@@ -13,6 +13,7 @@ import h5py
 from esl_timeseries_dataset import esl_timeseries_dataset
 from terminaltables import AsciiTable
 from tqdm import tnrange, trange
+import datetime
 
 parser = argparse.ArgumentParser(\
         prog='Train a feedforward neural network for the forward dynamics of a drone',\
@@ -86,13 +87,27 @@ with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
 
 db.close()
 
+
+# SAVING METRIC
+current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+train_log_dir = './training_results/'+ current_time + '/train'
+test_log_dir = './training_results/' + current_time + '/test'
+train_summary_writer = tf.summary.create_file_writer(train_log_dir)
+test_summary_writer = tf.summary.create_file_writer(test_log_dir)
+
 # CUSTOM TRAINING
 mae = tf.keras.losses.MeanAbsoluteError()
 optimizer = tf.keras.optimizers.Adam()
 
 #  METRICS
-train_mean = tf.keras.metrics.Mean()
-test_loss = tf.keras.metrics.MeanAbsoluteError(name='test_loss', dtype=tf.float32)
+train_loss = 0
+val_loss = 0
+
+
+train_mean_sqrd_error = tf.keras.metrics.MeanSquaredError(name='train_mean_sqrd_error')
+val_mean_sqrd_error = tf.keras.metrics.MeanSquaredError(name='val_mean_sqrd_error')
+train_mean_abs_error = tf.keras.metrics.MeanAbsoluteError(name='train_mean_abs_error')
+val_mean_abs_error = tf.keras.metrics.MeanAbsoluteError(name='val_mean_abs_error')
 
 # Building model
 def create_ffnn_model(input_shape=10):
@@ -117,18 +132,21 @@ def train_step(model, optimizer, x_train, y_train):
 
   with tf.GradientTape() as tape:
     predictions = model(x_train, training=True)
+    train_mean_sqrd_error.update_state(y_train,predictions)
+    train_mean_abs_error.update_state(y_train,predictions)
     loss = mae_and_weight_reg_loss(y_train, predictions, model.trainable_variables)
+    train_loss = loss
 
   grads = tape.gradient(loss, model.trainable_variables)
   optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-  train_mean(loss)
+  # train_mean(loss)
 
 def test_step(model, x_test, y_test):
     predictions = model(x_test)
     loss = loss_object(y_test, predictions)
 
-    test_loss(loss)
+    val_loss = loss
 
 
 
@@ -139,7 +157,7 @@ output_indices= [11, 12, 13, 14, 15, 16]
 train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size,
                                         input_indices,output_indices)
 
-                                        
+
 forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
 
 # for epoch in trange(epochs):
@@ -147,8 +165,11 @@ for epoch in range(epochs):
     for x_train, y_train in train_dataset:
         train_step(forward_dynamics_model, optimizer, x_train, y_train)
 # #
-#     with train_summary_writer.as_default():
-#         tf.summary.scalar('loss', train_loss.result(), step=epoch)
+    with train_summary_writer.as_default():
+        tf.summary.scalar('train_loss', train_loss, step=epoch)
+        tf.summary.scalar('train_mean_sqrd_error', train_mean_sqrd_error.result(), step=epoch)
+        tf.summary.scalar('train_mean_abs_error', train_mean_abs_error.result(), step=epoch)
+
 # #
 # #     for (x_test, y_test) in test_dataset:
 # #         test_step(model, x_test, y_test)
@@ -156,13 +177,14 @@ for epoch in range(epochs):
 # #     with test_summary_writer.as_default():
 # #         tf.summary.scalar('loss', test_loss.result(), step=epoch)
 # #
-    print("Epoch {}, mae: {}".format(epoch+1,train_mean.result()))
+    print("Epoch {}, mae: {}".format(epoch+1,train_mean_abs_error.result()))
 
 
 
 with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
 
-    db['mean_of_model'] = train_mean.result()
-    # db['loss_of_validatio_dataset'] = test_loss.result()
+    db['mean_of_model'] = train_mean_abs_error.result()
+    db['train_log_dir'] = str(train_log_dir)
+    db['test_log_dir'] = str(test_log_dir)
 
 db.close()
