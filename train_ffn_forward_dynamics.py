@@ -100,8 +100,10 @@ mae = tf.keras.losses.MeanAbsoluteError()
 optimizer = tf.keras.optimizers.Adam()
 
 #  METRICS
-train_loss = 0
-val_loss = 0
+mean_train_loss = tf.keras.metrics.Mean(name='mean_train_loss')
+mean_val_loss = tf.keras.metrics.Mean(name='mean_val_loss')
+
+# 
 
 
 train_mean_sqrd_error = tf.keras.metrics.MeanSquaredError(name='train_mean_sqrd_error')
@@ -117,8 +119,19 @@ def create_ffnn_model(input_shape=10):
     layers.ReLU(),\
     layers.Dense(6,dtype=tf.float64)
     ])
+    model.summary()
 
     return model
+
+
+# def create_openai_model(input_shape=10):
+#
+#     model = Sequential()
+#     model.add(layers.Dense(1024,input_shape=(input_shape,),dtype=tf.float64,activation='relu'))
+#     model.add(layers.LSTM(512))
+#     model.add(layers.)
+#
+#     return model
 
 
 
@@ -130,15 +143,15 @@ def mae_and_weight_reg_loss(predictions,ground_truth,vars):
 
 def train_step(model, optimizer, x_train, y_train):
 
-  with tf.GradientTape() as tape:
-    predictions = model(x_train, training=True)
-    train_mean_sqrd_error.update_state(y_train,predictions)
-    train_mean_abs_error.update_state(y_train,predictions)
-    loss = mae_and_weight_reg_loss(y_train, predictions, model.trainable_variables)
-    train_loss = loss
+    with tf.GradientTape() as tape:
+        predictions = model(x_train, training=True)
+        train_mean_sqrd_error.update_state(y_train,predictions)
+        train_mean_abs_error.update_state(y_train,predictions)
+        loss = mae_and_weight_reg_loss(y_train, predictions, model.trainable_variables)
+        mean_train_loss.update_state(loss)
 
-  grads = tape.gradient(loss, model.trainable_variables)
-  optimizer.apply_gradients(zip(grads, model.trainable_variables))
+    grads = tape.gradient(loss, model.trainable_variables)
+    optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
   # train_mean(loss)
 
@@ -166,7 +179,7 @@ for epoch in range(epochs):
         train_step(forward_dynamics_model, optimizer, x_train, y_train)
 # #
     with train_summary_writer.as_default():
-        tf.summary.scalar('train_loss', train_loss, step=epoch)
+        tf.summary.scalar('train_loss', mean_train_loss.result(), step=epoch)
         tf.summary.scalar('train_mean_sqrd_error', train_mean_sqrd_error.result(), step=epoch)
         tf.summary.scalar('train_mean_abs_error', train_mean_abs_error.result(), step=epoch)
 
@@ -177,13 +190,14 @@ for epoch in range(epochs):
 # #     with test_summary_writer.as_default():
 # #         tf.summary.scalar('loss', test_loss.result(), step=epoch)
 # #
-    print("Epoch {}, mae: {}".format(epoch+1,train_mean_abs_error.result()))
+    print("Epoch {}, train loss: {}, train mae: {}".format(epoch+1,mean_train_loss.result(),train_mean_abs_error.result()))
 
 
 
 with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
 
-    db['mean_of_model'] = train_mean_abs_error.result()
+    db['train_mean_abs_error'] = train_mean_abs_error.result()
+    db['mean_train_loss'] = mean_train_loss.result()
     db['train_log_dir'] = str(train_log_dir)
     db['test_log_dir'] = str(test_log_dir)
 
