@@ -156,6 +156,18 @@ def convert_ulog2csv(ulog_file_name, messages, output, delimiter, disable_str_ex
     return path2CSVs
 
 
+def whitening_dataset(dataset,features):
+    ''' Whitening of dataset '''
+    mean = np.mean(dataset,1).reshape(features,1)
+    std = np.std(dataset,1).reshape(features,1)
+
+    dataset = (dataset-mean)/std
+    return dataset
+
+
+def normalise_dataset(dataset,features):
+    max = np.amax(dataset,1).
+
 def generateDataset(logs):
 
     features = 17
@@ -342,6 +354,10 @@ train_dataset = generateDataset(training_logs)
 validation_dataset = generateDataset(validation_logs)
 
 
+num_samples=len(train_dataset[0,:])
+val_num_samples=len(validation_dataset[0,:])
+
+
 max_q1 = np.amax(train_dataset[0,:])
 max_q2 = np.amax(train_dataset[1,:])
 max_q3 = np.amax(train_dataset[2,:])
@@ -403,7 +419,6 @@ validation_dataset[15,:] = validation_dataset[15,:]/maxVdot
 validation_dataset[16,:] = validation_dataset[16,:]/maxWdot
 
 
-
 print('\n--------------------------------------------------------------')
 print('Saving dataset readme at:', str(dataset_loc + '/'+dataset_name+'_readme'))
 print('--------------------------------------------------------------')
@@ -431,7 +446,8 @@ with shelve.open( str(dataset_loc + '/'+dataset_name+'_readme')) as db:
     db['max_q3'] = max_q3
     db['max_q4'] = max_q4
 
-    db['dataset_num_entries'] = counter
+    db['train_dataset_num_entries'] = train_num_samples
+    db['validation_dataset_num_entries'] = val_num_samples
     db['numOfLogs'] = len(listOfLogs)
     db['drone_name'] = drone_name
     db['motor_thrust'] = motor_thrust
