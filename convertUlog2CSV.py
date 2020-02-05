@@ -310,7 +310,8 @@ def generateDataset(logs):
     return dataset
 
 # log directory
-log_dir = "/home/henry/esl-sun/PX4/build/px4_sitl_default/logs/"
+# log_dir = "/home/henry/esl-sun/PX4/build/px4_sitl_default/logs/"
+log_dir = "./logs/"
 # entries of interest
 log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs'
 listOfEOI = log_eoi.split(',')

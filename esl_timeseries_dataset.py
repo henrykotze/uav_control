@@ -39,16 +39,16 @@ class esl_timeseries_dataset(object):
         print('\n--------------------------------------------------------------')
         print('Reading dataset file: {}'.format(path_to_h5py))
         print('--------------------------------------------------------------')
-        f = h5py.File(path_to_h5py, 'r')
+        hf = h5py.File(path_to_h5py, 'r')
         # print('{} contains: {}'.format(path_to_h5py,f.keys()))
-        self.dataset = f['dataset']
+        self.dataset = hf['dataset']
+        #hf.close()
         self.shape = self.dataset.shape
         self.total_samples = self.shape[1]
         self.total_inputs = len(self.input_indices)
         self.total_labels = len(self.output_indices)
         self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
-    def __iter__(self):
 
         start_index = self.windowsize
 
@@ -62,6 +62,7 @@ class esl_timeseries_dataset(object):
         if(self.shuffle_dataset):
             self.shuffle()
 
+    def __iter__(self):
         return self
 
     def __next__(self):

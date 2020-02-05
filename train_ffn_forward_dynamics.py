@@ -93,7 +93,7 @@ db.close()
 # SAVING METRIC
 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 train_log_dir = './training_results/'+ current_time + '/train'
-test_log_dir = './training_results/' + current_time + '/test'
+test_log_dir = './training_results/' + current_time + '/validation'
 train_summary_writer = tf.summary.create_file_writer(train_log_dir)
 test_summary_writer = tf.summary.create_file_writer(test_log_dir)
 
@@ -117,7 +117,7 @@ val_mean_abs_error = tf.keras.metrics.MeanAbsoluteError(name='val_mean_abs_error
 def create_ffnn_model(input_shape=10):
 
     model = keras.Sequential([
-    layers.Dense(100,input_shape=(input_shape,),dtype=tf.float64), \
+    layers.Dense(10,input_shape=(input_shape,),dtype=tf.float64), \
     layers.ReLU(),\
     layers.Dense(6,dtype=tf.float64)
     ])
@@ -152,13 +152,13 @@ def train_step(model, optimizer, x_train, y_train):
         loss = mae_and_weight_reg_loss(y_train, predictions, model.trainable_variables)
         mean_train_loss.update_state(loss)
 
-    grads = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(grads, model.trainable_variables))
+        grads = tape.gradient(loss, model.trainable_variables)
+        optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
   # train_mean(loss)
 
 def test_step(model, x_test, y_test):
-    predictions = model(x_test)
+    predictions = model.predict_on_batch(x_test)
 
     loss = mae_and_weight_reg_loss(predictions,y_test,model.trainable_variables)
     mean_val_loss.update_state(loss)
@@ -168,7 +168,7 @@ def test_step(model, x_test, y_test):
 # [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
 input_indices= [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 # [P,Q,R,Udot,Vdot,Wdot]
-output_indices= [11, 12, 13, 14, 15, 16]
+output_indices = [11, 12, 13, 14, 15, 16]
 train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size,
                                         input_indices,output_indices)
 
@@ -180,20 +180,19 @@ forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
 # for epoch in trange(epochs):
 for epoch in range(epochs):
     for x_train, y_train in train_dataset:
-        train_step(forward_dynamics_model, optimizer, x_train, y_train)
-# #
+       train_step(forward_dynamics_model, optimizer, x_train, y_train)
+
     with train_summary_writer.as_default():
-        tf.summary.scalar('train_loss', mean_train_loss.result(), step=epoch)
+        tf.summary.scalar('loss', mean_train_loss.result(), step=epoch)
         tf.summary.scalar('train_mean_sqrd_error', train_mean_sqrd_error.result(), step=epoch)
         tf.summary.scalar('train_mean_abs_error', train_mean_abs_error.result(), step=epoch)
 
-# #
     for (x_test, y_test) in validation_dataset:
         test_step(forward_dynamics_model, x_test, y_test)
-# #
+
     with test_summary_writer.as_default():
         tf.summary.scalar('loss', mean_val_loss.result(), step=epoch)
-# #
+
     print("Epoch {}, train loss: {}, train mae: {}".format(epoch+1,mean_train_loss.result(),train_mean_abs_error.result()))
 
 
