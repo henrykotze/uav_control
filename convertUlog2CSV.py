@@ -36,7 +36,7 @@ addition_info = str(vars(args)['add_info'])
 dataset_name = str(vars(args)['dataset_name'])
 validation_dataset_name = 'validation_' + str(vars(args)['dataset_name'])
 dataset_loc = str(vars(args)['dataset_loc'])
-validation_percentage = str(vars(args)['val_percent'])
+validation_percentage = float(vars(args)['val_percent'])
 
 
 yamlfile = open(drone_file_path,'r')
@@ -162,11 +162,11 @@ def whitening_dataset(dataset,features):
     std = np.std(dataset,1).reshape(features,1)
 
     dataset = (dataset-mean)/std
-    return dataset
+    return [dataset,mean,std]
 
 
 def normalise_dataset(dataset,features):
-    max = np.amax(dataset,1).
+    max = np.amax(dataset,1)
 
 def generateDataset(logs):
 
@@ -354,7 +354,7 @@ train_dataset = generateDataset(training_logs)
 validation_dataset = generateDataset(validation_logs)
 
 
-num_samples=len(train_dataset[0,:])
+train_num_samples=len(train_dataset[0,:])
 val_num_samples=len(validation_dataset[0,:])
 
 
@@ -465,7 +465,7 @@ print('Saving training dataset:', dataset_name)
 print('--------------------------------------------------------------')
 
 h5f = h5py.File(str(dataset_loc + '/'+dataset_name),'w')
-h5f.create_dataset('dataset', data=dataset)
+h5f.create_dataset('dataset', data=train_dataset)
 h5f.close()
 
 
@@ -474,5 +474,5 @@ print('Saving validation dataset:', validation_dataset_name)
 print('--------------------------------------------------------------')
 
 h5f = h5py.File(str(dataset_loc + '/'+validation_dataset_name),'w')
-h5f.create_dataset('dataset', data=dataset)
+h5f.create_dataset('dataset', data=validation_dataset)
 h5f.close()

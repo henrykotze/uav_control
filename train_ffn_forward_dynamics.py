@@ -22,8 +22,7 @@ parser = argparse.ArgumentParser(\
 
 
 parser.add_argument('-train_dataset_path', default='', help='path to training dataset')
-parser.add_argument('-val_dataset_path', default='', help='path to validation dataset')
-parser.add_argument('-epochs', default=10, help='number of neurons within hidden layers')
+parser.add_argument('-epochs', default=10, help='epochs for training')
 parser.add_argument('-model_name', default='forward_dynamics_model', help='name of model')
 parser.add_argument('-model_path', default='./trained_models', help='path to direcory to save model')
 parser.add_argument('-lr', default=0.003, help='learning rate')
@@ -56,6 +55,8 @@ print('----------------------------------------------------------------')
 print('Fetching training info from: {}'.format(dataset_readme))
 print('----------------------------------------------------------------')
 data = []
+validation_dataset_path = './dataset_sim/validation_hanabi_test'
+
 with shelve.open(dataset_readme) as db:
     for key,value in db.items():
         data.append([str(key),str(value)])
@@ -63,6 +64,7 @@ db.close()
 table  = AsciiTable(data)
 table.inner_row_border = True
 print(table.table)
+
 
 
 
@@ -103,7 +105,7 @@ optimizer = tf.keras.optimizers.Adam()
 mean_train_loss = tf.keras.metrics.Mean(name='mean_train_loss')
 mean_val_loss = tf.keras.metrics.Mean(name='mean_val_loss')
 
-# 
+#
 
 
 train_mean_sqrd_error = tf.keras.metrics.MeanSquaredError(name='train_mean_sqrd_error')
@@ -157,9 +159,9 @@ def train_step(model, optimizer, x_train, y_train):
 
 def test_step(model, x_test, y_test):
     predictions = model(x_test)
-    loss = loss_object(y_test, predictions)
 
-    val_loss = loss
+    loss = mae_and_weight_reg_loss(predictions,y_test,model.trainable_variables)
+    mean_val_loss.update_state(loss)
 
 
 
@@ -170,6 +172,8 @@ output_indices= [11, 12, 13, 14, 15, 16]
 train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size,
                                         input_indices,output_indices)
 
+validation_dataset = esl_timeseries_dataset(validation_dataset_path,window_size,step,batch_size,
+                                        input_indices,output_indices)
 
 forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
 
@@ -184,11 +188,11 @@ for epoch in range(epochs):
         tf.summary.scalar('train_mean_abs_error', train_mean_abs_error.result(), step=epoch)
 
 # #
-# #     for (x_test, y_test) in test_dataset:
-# #         test_step(model, x_test, y_test)
+    for (x_test, y_test) in validation_dataset:
+        test_step(forward_dynamics_model, x_test, y_test)
 # #
-# #     with test_summary_writer.as_default():
-# #         tf.summary.scalar('loss', test_loss.result(), step=epoch)
+    with test_summary_writer.as_default():
+        tf.summary.scalar('loss', mean_val_loss.result(), step=epoch)
 # #
     print("Epoch {}, train loss: {}, train mae: {}".format(epoch+1,mean_train_loss.result(),train_mean_abs_error.result()))
 
