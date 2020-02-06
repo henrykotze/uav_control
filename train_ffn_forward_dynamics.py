@@ -14,6 +14,7 @@ from esl_timeseries_dataset import esl_timeseries_dataset
 from terminaltables import AsciiTable
 from tqdm import tnrange, trange
 import datetime
+import os
 
 parser = argparse.ArgumentParser(\
         prog='Train a feedforward neural network for the forward dynamics of a drone',\
@@ -69,11 +70,10 @@ print(table.table)
 
 
 print('\n--------------------------------------------------------------')
-print('Saving dataset readme at:', str(path_to_model + '/'+ name_of_model +'_readme'))
+print('Saving model training readme at:', str(path_to_model + '/'+ name_of_model +'_readme'))
 print('--------------------------------------------------------------')
 
 with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
-
 
     with shelve.open(dataset_readme) as db2:
         for key,value in db2.items():
@@ -92,8 +92,14 @@ db.close()
 
 # SAVING METRIC
 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+completed_log_dir = './training_results/' + current_time
 train_log_dir = './training_results/'+ current_time + '/train'
 test_log_dir = './training_results/' + current_time + '/validation'
+checkpoint_log_dir = './training_results/' + current_time + '/checkpoints'
+checkpoint_log_path = './training_results/' + current_time + '/checkpoints/cp-epoch-{}.h5'
+os.mkdir(completed_log_dir)
+os.mkdir(checkpoint_log_dir)
+
 train_summary_writer = tf.summary.create_file_writer(train_log_dir)
 test_summary_writer = tf.summary.create_file_writer(test_log_dir)
 
@@ -104,6 +110,7 @@ optimizer = tf.keras.optimizers.Adam()
 #  METRICS
 mean_train_loss = tf.keras.metrics.Mean(name='mean_train_loss')
 mean_val_loss = tf.keras.metrics.Mean(name='mean_val_loss')
+prev_mean_val_loss = 10000;
 
 #
 
@@ -164,6 +171,7 @@ def test_step(model, x_test, y_test):
 
 
 
+
 # [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
 input_indices= [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 # [P,Q,R,Udot,Vdot,Wdot]
@@ -189,6 +197,13 @@ for epoch in range(epochs):
     for (x_test, y_test) in validation_dataset:
         test_step(forward_dynamics_model, x_test, y_test)
 
+    if(mean_val_loss.result() < prev_mean_val_loss):
+        print('val loss improved from {} to {}'.format(prev_mean_val_loss,mean_val_loss.result()))
+        prev_mean_val_loss = mean_val_loss.result()
+        print(checkpoint_log_path.format(epoch))
+        forward_dynamics_model.save(checkpoint_log_path.format(epoch))
+
+
     with test_summary_writer.as_default():
         tf.summary.scalar('loss', mean_val_loss.result(), step=epoch)
 
@@ -196,7 +211,9 @@ for epoch in range(epochs):
 
 
 
-with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
+forward_dynamics_model.save(str(completed_log_dir + '/'+ name_of_model + '.h5'))
+
+with shelve.open( str(completed_log_dir + '/'+ name_of_model + '_readme')) as db:
 
     db['train_mean_abs_error'] = train_mean_abs_error.result()
     db['mean_train_loss'] = mean_train_loss.result()
