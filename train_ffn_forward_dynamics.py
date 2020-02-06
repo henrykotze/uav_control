@@ -69,11 +69,24 @@ print(table.table)
 
 
 
+
+# SAVING METRIC
+current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+completed_log_dir = './training_results/' + current_time
+train_log_dir = './training_results/'+ current_time + '/train'
+test_log_dir = './training_results/' + current_time + '/validation'
+checkpoint_log_dir = './training_results/' + current_time + '/checkpoints'
+checkpoint_log_path = './training_results/' + current_time + '/checkpoints/cp-epoch-{}.h5'
+os.mkdir(completed_log_dir)
+os.mkdir(checkpoint_log_dir)
+
+
+
 print('\n--------------------------------------------------------------')
-print('Saving model training readme at:', str(path_to_model + '/'+ name_of_model +'_readme'))
+print('Saving model training readme at:', str(completed_log_dir+ '/'+ name_of_model +'_readme'))
 print('--------------------------------------------------------------')
 
-with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
+with shelve.open( str(completed_log_dir + '/'+ name_of_model + '_readme')) as db:
 
     with shelve.open(dataset_readme) as db2:
         for key,value in db2.items():
@@ -89,16 +102,6 @@ with shelve.open( str(path_to_model + '/'+ name_of_model + '_readme')) as db:
 
 db.close()
 
-
-# SAVING METRIC
-current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-completed_log_dir = './training_results/' + current_time
-train_log_dir = './training_results/'+ current_time + '/train'
-test_log_dir = './training_results/' + current_time + '/validation'
-checkpoint_log_dir = './training_results/' + current_time + '/checkpoints'
-checkpoint_log_path = './training_results/' + current_time + '/checkpoints/cp-epoch-{}.h5'
-os.mkdir(completed_log_dir)
-os.mkdir(checkpoint_log_dir)
 
 train_summary_writer = tf.summary.create_file_writer(train_log_dir)
 test_summary_writer = tf.summary.create_file_writer(test_log_dir)
