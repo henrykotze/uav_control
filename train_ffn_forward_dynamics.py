@@ -117,7 +117,7 @@ val_mean_abs_error = tf.keras.metrics.MeanAbsoluteError(name='val_mean_abs_error
 def create_ffnn_model(input_shape=10):
 
     model = keras.Sequential([
-    layers.Dense(10,input_shape=(input_shape,),dtype=tf.float64), \
+    layers.Dense(100,input_shape=(input_shape,),dtype=tf.float64), \
     layers.ReLU(),\
     layers.Dense(6,dtype=tf.float64)
     ])
@@ -155,7 +155,6 @@ def train_step(model, optimizer, x_train, y_train):
         grads = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-  # train_mean(loss)
 
 def test_step(model, x_test, y_test):
     predictions = model.predict_on_batch(x_test)

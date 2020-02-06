@@ -10,7 +10,7 @@ class esl_timeseries_dataset(object):
     over the dataset
     '''
 
-    def __init__(self,dataset,windowsize,step,batchsize,input_indices,output_indices,shuffle=True):
+    def __init__(self,dataset,windowsize,step,batchsize,input_indices,output_indices,shuffle=True,percent=1):
 
         self.batchsize = batchsize
         self.step = step
@@ -21,6 +21,7 @@ class esl_timeseries_dataset(object):
         self.shuffle_dataset = shuffle
         self.input_indices = input_indices
         self.output_indices = output_indices
+        self.percent = percent
 
 
         self.load_dataset(dataset)
@@ -44,7 +45,7 @@ class esl_timeseries_dataset(object):
         self.dataset = hf['dataset']
         #hf.close()
         self.shape = self.dataset.shape
-        self.total_samples = self.shape[1]
+        self.total_samples = int(np.floor(self.shape[1]*self.percent))
         self.total_inputs = len(self.input_indices)
         self.total_labels = len(self.output_indices)
         self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
