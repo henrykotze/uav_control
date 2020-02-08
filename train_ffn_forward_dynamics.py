@@ -89,6 +89,7 @@ print('--------------------------------------------------------------')
 with shelve.open( str(completed_log_dir + '/'+ name_of_model + '_readme')) as db:
 
     with shelve.open(dataset_readme) as db2:
+
         for key,value in db2.items():
             db[str(key)] = value
     db2.close()
