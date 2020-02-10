@@ -39,8 +39,6 @@ class esl_timeseries_dataset(object):
         self.total_samples = int(np.floor(self.shape[1]))
         self.total_inputs = len(self.input_indices)
         self.total_labels = len(self.output_indices)
-        self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
-
 
         start_index = self.windowsize
 
@@ -53,6 +51,9 @@ class esl_timeseries_dataset(object):
 
         if(self.shuffle_dataset):
             self.shuffle()
+
+
+        self.num_batches = int(np.floor((len(self.y_indices)/self.batchsize)))
 
     def getNumSamples(self):
         return self.total_samples
@@ -78,11 +79,11 @@ class esl_timeseries_dataset(object):
 
             for batch_counter in range(self.batchsize):
 
-                x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.n+batch_counter]][self.input_indices].flatten()
-                y_train[batch_counter,:] = self.dataset[:,self.y_indices[self.n+batch_counter]][self.output_indices]
+                x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.batchsize*self.n+batch_counter]][self.input_indices].flatten()
+                y_train[batch_counter,:] = self.dataset[:,self.y_indices[self.batchsize*self.n+batch_counter]][self.output_indices]
 
 
-            self.n += self.batchsize
+            self.n += 1
             return x_train,y_train
 
         else:
