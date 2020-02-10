@@ -58,6 +58,12 @@ class esl_timeseries_dataset(object):
     def getTotalPredictions(self):
         return len(self.y_indices)
 
+    def getTotalBatches(self):
+        return self.num_batches
+
+    def getTotalSamples(self):
+        return self.total_samples
+
     def __iter__(self):
         return self
 

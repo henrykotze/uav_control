@@ -455,6 +455,7 @@ with shelve.open( str(dataset_loc + '/'+dataset_name+'_readme')) as db:
     db['addition_information'] = str(addition_info)
     db['name_of_validation_dataset'] = validation_dataset_name
     db['validation_percentage'] =  validation_percentage
+    db['dataset_loc'] = dataset_loc
 
 
 

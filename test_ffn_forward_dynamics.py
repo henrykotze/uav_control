@@ -41,10 +41,7 @@ print("TensorFlow version: {}".format(tf.__version__))
 print("Eager execution: {}".format(tf.executing_eagerly()))
 print('----------------------------------------------------------------')
 
-
 data =[]
-
-
 
 def getReadmePath(path):
     readme = ''
@@ -55,7 +52,6 @@ def getReadmePath(path):
             readme += dirs[i] + '/'
 
     else:
-        print('mep')
         dirs = path.split('/')
         # pos = dirs.index("nn_mdl")
         pos = len(dirs)
@@ -68,7 +64,6 @@ def getReadmePath(path):
 
 model_readme = getReadmePath(path_to_model)
 
-# model_readme, file_extension = os.path.splitext(path_to_model)
 print('----------------------------------------------------------------')
 print('Fetching model info from: {}'.format(model_readme))
 print('----------------------------------------------------------------')
@@ -76,7 +71,7 @@ print('----------------------------------------------------------------')
 with shelve.open(model_readme) as db:
     window_size = db['window_size']
     batchsize = db['batch_size']
-    num_samples = int(db['dataset_num_entries'])
+    # num_samples = int(db['dataset_num_entries'])
     maxUdot = db['maxUdot']
     maxVdot = db['maxVdot']
     maxWdot = db['maxWdot']
@@ -108,28 +103,54 @@ table.inner_row_border = True
 print(table.table)
 
 # Importing saved model
-model = tf.keras.models.load_model(path_to_model)
+model = tf.keras.models.load_model(path_to_model,compile=False)
 
 
+# [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
 input_indices= [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 # [P,Q,R,Udot,Vdot,Wdot]
 output_indices = [11, 12, 13, 14, 15, 16]
-step = 1
-batchsize=64
+
 test_dataset = esl_timeseries_dataset(dataset,window_size,1,batchsize,input_indices,
                 output_indices,shuffle=False)
 
 total_predictions = test_dataset.getTotalPredictions()
+
 predictions = np.zeros((total_predictions,6))
+ground_truth = np.zeros((total_predictions,6))
+
+
 counter = 0
 predict  = 0
 
+print(total_predictions)
+
+
+lol = np.zeros((1,64*3))
+
+
+sol = 0
 for (x_test, y_test) in test_dataset:
 
-    predict = model.predict(x_test)
+    # predict = model.predict(x_test)
+    # print(y_test[:,0])
+    # lol[0,counter:counter+batchsize] = y_test[:,0]
+    #
+    # counter += batchsize
+    sol += 1
+    print(sol)
 
-    predictions[counter:counter+batchsize,:] = predict
-    counter += batchsize
+
+sol = 0
+for (x_test, y_test) in test_dataset:
+
+    # predict = model.predict(x_test)
+    # print(y_test[:,0])
+    # lol[0,counter:counter+batchsize] = y_test[:,0]
+    #
+    # counter += batchsize
+    sol += 1
+    print(sol)
 
 
 
@@ -138,8 +159,9 @@ plt.rc('font', family='serif')
 plt.rc('font', size=12)
 
 plt.figure(1)
-plt.plot(predictions[:,0]*maxP,'-', mew=1, ms=8,mec='w')
-plt.plot(test_dataset[0,:],'-', mew=1, ms=8,mec='w')
+# plt.plot(predictions[:,1],'-', mew=1, ms=8,mec='w')
+plt.plot(test_dataset[13,:]*maxP,'-', mew=1, ms=8,mec='w')
+plt.plot(lol.transpose(),'-', mew=1, ms=8,mec='w')
 plt.grid()
 plt.legend(['$\hat{\dot{P}}$', '$\dot{P}$'])
 plt.title('Angular Acceleration, $\dot{P}$ of Drone ')

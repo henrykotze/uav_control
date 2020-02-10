@@ -56,7 +56,6 @@ print('----------------------------------------------------------------')
 print('Fetching training info from: {}'.format(dataset_readme))
 print('----------------------------------------------------------------')
 data = []
-validation_dataset_path = './dataset_sim/validation_hanabi_test'
 
 with shelve.open(dataset_readme) as db:
     for key,value in db.items():
@@ -89,9 +88,11 @@ print('--------------------------------------------------------------')
 with shelve.open( str(completed_log_dir + '/'+ 'readme')) as db:
 
     with shelve.open(dataset_readme) as db2:
-
+        name_validation_dataset = db2['name_of_validation_dataset']
         for key,value in db2.items():
             db[str(key)] = value
+
+
     db2.close()
 
     db['epochs'] = epochs
@@ -102,6 +103,7 @@ with shelve.open( str(completed_log_dir + '/'+ 'readme')) as db:
 
 
 db.close()
+
 
 with shelve.open( str(checkpoint_log_dir + '/'+ 'readme')) as db:
 
@@ -147,6 +149,8 @@ def create_ffnn_model(input_shape=10):
     model = keras.Sequential([
     layers.Dense(100,input_shape=(input_shape,),dtype=tf.float64), \
     layers.ReLU(),\
+    layers.Dense(1000,dtype=tf.float64),\
+    layers.ReLU(),\
     layers.Dense(6,dtype=tf.float64)
     ])
     model.summary()
@@ -181,6 +185,7 @@ def test_step(model, x_test, y_test):
 
 
 
+validation_dataset_path = './dataset_sim/validation_hanabi'
 
 # [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
 input_indices= [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
