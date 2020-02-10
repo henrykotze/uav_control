@@ -1,7 +1,6 @@
 import numpy as np
 import random
 import h5py
-import tensorflow as tf
 
 
 class esl_timeseries_dataset(object):
@@ -55,6 +54,9 @@ class esl_timeseries_dataset(object):
         if(self.shuffle_dataset):
             self.shuffle()
 
+    def getNumSamples(self):
+        return self.total_samples
+
     def getTotalPredictions(self):
         return len(self.y_indices)
 
@@ -73,6 +75,7 @@ class esl_timeseries_dataset(object):
         y_train = np.zeros((self.batchsize,self.total_labels))
 
         if(self.n < self.num_batches):
+
             for batch_counter in range(self.batchsize):
 
                 x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.n+batch_counter]][self.input_indices].flatten()
