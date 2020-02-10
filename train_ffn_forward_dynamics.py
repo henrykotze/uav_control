@@ -83,10 +83,27 @@ os.mkdir(checkpoint_log_dir)
 
 
 print('\n--------------------------------------------------------------')
-print('Saving model training readme at:', str(completed_log_dir+ '/'+ name_of_model +'_readme'))
+print('Saving model training readme at:', str(completed_log_dir+ '/'+ 'readme'))
 print('--------------------------------------------------------------')
 
-with shelve.open( str(completed_log_dir + '/'+ name_of_model + '_readme')) as db:
+with shelve.open( str(completed_log_dir + '/'+ 'readme')) as db:
+
+    with shelve.open(dataset_readme) as db2:
+
+        for key,value in db2.items():
+            db[str(key)] = value
+    db2.close()
+
+    db['epochs'] = epochs
+    db['learning_rate'] = lr
+    db['weight_regularisation'] = weight_regularisation
+    db['window_size'] = window_size
+    db['batch_size'] = batch_size
+
+
+db.close()
+
+with shelve.open( str(checkpoint_log_dir + '/'+ 'readme')) as db:
 
     with shelve.open(dataset_readme) as db2:
 
@@ -135,17 +152,6 @@ def create_ffnn_model(input_shape=10):
     model.summary()
 
     return model
-
-
-# def create_openai_model(input_shape=10):
-#
-#     model = Sequential()
-#     model.add(layers.Dense(1024,input_shape=(input_shape,),dtype=tf.float64,activation='relu'))
-#     model.add(layers.LSTM(512))
-#     model.add(layers.)
-#
-#     return model
-
 
 
 def mae_and_weight_reg_loss(predictions,ground_truth,vars):
@@ -202,10 +208,20 @@ for epoch in range(epochs):
         test_step(forward_dynamics_model, x_test, y_test)
 
     if(mean_val_loss.result() < prev_mean_val_loss):
+
         print('val loss improved from {} to {}'.format(prev_mean_val_loss,mean_val_loss.result()))
         prev_mean_val_loss = mean_val_loss.result()
         print(checkpoint_log_path.format(epoch))
         forward_dynamics_model.save(checkpoint_log_path.format(epoch))
+
+
+        with shelve.open( str(checkpoint_log_dir + '/'+ 'readme')) as db:
+
+            db['train_mean_abs_error'] = float(train_mean_abs_error.result())
+            db['mean_train_loss'] = float(mean_train_loss.result())
+            db['mean_val_loss'] = float(mean_val_loss.result())
+
+        db.close()
 
 
     with test_summary_writer.as_default():
@@ -213,15 +229,14 @@ for epoch in range(epochs):
 
     print("Epoch {}, train loss: {}, train mae: {}".format(epoch+1,mean_train_loss.result(),train_mean_abs_error.result()))
 
-
-
 forward_dynamics_model.save(str(completed_log_dir + '/'+ name_of_model + '.h5'))
 
-with shelve.open( str(completed_log_dir + '/'+ name_of_model + '_readme')) as db:
+with shelve.open( str(completed_log_dir + '/'+ 'readme')) as db:
 
-    db['train_mean_abs_error'] = train_mean_abs_error.result()
-    db['mean_train_loss'] = mean_train_loss.result()
+    db['train_mean_abs_error'] = float(train_mean_abs_error.result())
+    db['mean_train_loss'] = float(mean_train_loss.result())
     db['train_log_dir'] = str(train_log_dir)
     db['test_log_dir'] = str(test_log_dir)
+    db['mean_val_loss'] = float(mean_val_loss.result())
 
 db.close()

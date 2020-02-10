@@ -21,9 +21,13 @@ input_indices= [0, 1, 2, 4]
 # [P,Q,R,Udot,Vdot,Wdot]
 output_indices = [5,6,7]
 
-batchsize=9
+batchsize=4
 test_dataset = esl_timeseries_dataset(dataset_name,window_size,1,batchsize,input_indices,
                 output_indices,shuffle=False)
+
+
+
+
 
 for x_train,y_train in test_dataset:
 

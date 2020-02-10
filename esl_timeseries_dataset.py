@@ -22,14 +22,7 @@ class esl_timeseries_dataset(object):
         self.input_indices = input_indices
         self.output_indices = output_indices
 
-
         self.load_dataset(dataset)
-        # self.dataset = dataset
-        # self.shape = self.dataset.shape
-        # self.total_samples = self.shape[1]
-        # self.total_inputs = len(self.input_indices)
-        # self.total_labels = len(self.output_indices)
-        # self.num_batches = int(np.ceil(self.total_samples/self.batchsize))
 
     def get_input_shape(self):
         return int(self.windowsize*self.total_inputs)
@@ -62,6 +55,9 @@ class esl_timeseries_dataset(object):
         if(self.shuffle_dataset):
             self.shuffle()
 
+    def getTotalPredictions(self):
+        return len(self.y_indices)
+
     def __iter__(self):
         return self
 
@@ -92,8 +88,6 @@ class esl_timeseries_dataset(object):
                 return self.dataset[col,row]
             else:
                 return self.dataset[col,row]
-
-
 
 
     def shuffle(self):

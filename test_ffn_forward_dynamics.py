@@ -50,24 +50,25 @@ def getReadmePath(path):
     readme = ''
     if 'checkpoints' in path:
         dirs = path.split('/')
-        pos = dirs.index("checkpoints")
-        for i in range(0,pos):
+        pos = dirs.index('checkpoints')
+        for i in range(0,pos+1):
             readme += dirs[i] + '/'
 
     else:
+        print('mep')
         dirs = path.split('/')
         # pos = dirs.index("nn_mdl")
-        pos = dirs.index("20200206")
-        for i in range(0,pos):
+        pos = len(dirs)
+        for i in range(0,pos-1):
             readme += dirs[i] + '/'
 
     readme += 'readme'
     return readme
 
 
-# model_readme = getReadmePath(path_to_model)
-model_readme, file_extension = os.path.splitext(path_to_model)
-model_readme = model_readme + '_readme'
+model_readme = getReadmePath(path_to_model)
+
+# model_readme, file_extension = os.path.splitext(path_to_model)
 print('----------------------------------------------------------------')
 print('Fetching model info from: {}'.format(model_readme))
 print('----------------------------------------------------------------')
@@ -118,16 +119,17 @@ batchsize=64
 test_dataset = esl_timeseries_dataset(dataset,window_size,1,batchsize,input_indices,
                 output_indices,shuffle=False)
 
-
-predictions = np.zeros((6,num_samples))
+total_predictions = test_dataset.getTotalPredictions()
+predictions = np.zeros((total_predictions,6))
 counter = 0
 predict  = 0
 
 for (x_test, y_test) in test_dataset:
-    predict = model.predict_on_batch(x_test)
-    print(predict)
-    # predictions[:,counter:counter+batchsize] = predict
-    # counter += batchsize
+
+    predict = model.predict(x_test)
+
+    predictions[counter:counter+batchsize,:] = predict
+    counter += batchsize
 
 
 
@@ -136,8 +138,8 @@ plt.rc('font', family='serif')
 plt.rc('font', size=12)
 
 plt.figure(1)
-plt.plot(predict[:,0]*maxP,'-', mew=1, ms=8,mec='w')
-# plt.plot(test_dataset[0,:],'-', mew=1, ms=8,mec='w')
+plt.plot(predictions[:,0]*maxP,'-', mew=1, ms=8,mec='w')
+plt.plot(test_dataset[0,:],'-', mew=1, ms=8,mec='w')
 plt.grid()
 plt.legend(['$\hat{\dot{P}}$', '$\dot{P}$'])
 plt.title('Angular Acceleration, $\dot{P}$ of Drone ')
