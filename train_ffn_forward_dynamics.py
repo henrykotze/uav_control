@@ -185,7 +185,7 @@ def test_step(model, x_test, y_test):
 
 
 
-validation_dataset_path = './dataset_sim/validation_hanabi'
+validation_dataset_path = './dataset_sim/hanabi_test'
 
 # [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
 input_indices= [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

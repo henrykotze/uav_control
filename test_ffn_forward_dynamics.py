@@ -78,6 +78,7 @@ with shelve.open(model_readme) as db:
     maxP = db['maxP']
     maxQ = db['maxQ']
     maxR = db['maxR']
+    dronename = db['drone_name']
 
     for key,value in db.items():
         data.append([str(key),str(value)])
@@ -114,103 +115,77 @@ output_indices = [11, 12, 13, 14, 15, 16]
 test_dataset = esl_timeseries_dataset(dataset,window_size,1,batchsize,input_indices,
                 output_indices,shuffle=False)
 
-total_predictions = test_dataset.getTotalPredictions()
-
-predictions = np.zeros((total_predictions,6))
-ground_truth = np.zeros((total_predictions,6))
-
 
 counter = 0
-predict  = 0
+total_predictions = test_dataset.getTotalPredictions()
+predictions = np.zeros((total_predictions,6))
 
-print(total_predictions)
-
-
-lol = np.zeros((1,64*3))
-
-
-sol = 0
 for (x_test, y_test) in test_dataset:
 
-    # predict = model.predict(x_test)
-    # print(y_test[:,0])
-    # lol[0,counter:counter+batchsize] = y_test[:,0]
-    #
-    # counter += batchsize
-    sol += 1
-    print(sol)
+    predict = model.predict(x_test)
+    predictions[counter:counter+batchsize,:] = predict
+    counter += batchsize
 
 
-sol = 0
-for (x_test, y_test) in test_dataset:
-
-    # predict = model.predict(x_test)
-    # print(y_test[:,0])
-    # lol[0,counter:counter+batchsize] = y_test[:,0]
-    #
-    # counter += batchsize
-    sol += 1
-    print(sol)
-
-
+title_pitchrate = 'Pitch rate, $P$, of {}'.format(dronename)
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 plt.rc('font', size=12)
 
 plt.figure(1)
-# plt.plot(predictions[:,1],'-', mew=1, ms=8,mec='w')
-plt.plot(test_dataset[13,:]*maxP,'-', mew=1, ms=8,mec='w')
-plt.plot(lol.transpose(),'-', mew=1, ms=8,mec='w')
+plt.plot(predictions[:,0],'-', mew=1, ms=8,mec='w')
+plt.plot(test_dataset[11,:],'-', mew=1, ms=8,mec='w')
+# plt.plot(lol.transpose(),'-', mew=1, ms=8,mec='w')
 plt.grid()
-plt.legend(['$\hat{\dot{P}}$', '$\dot{P}$'])
-plt.title('Angular Acceleration, $\dot{P}$ of Drone ')
+plt.legend(['$\hat{P}$', '$P$'])
+plt.title(title_pitchrate)
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
 plt.xlabel('Time - [s]')
-plt.ylabel('Angular Acceleration - [rad/s$^{2}$]')
+plt.ylabel('Pitch Rate - [rad/s]')
 
-# plt.figure(2)
-# plt.plot(predictions[:,1]*maxQdot,'-', mew=1, ms=8,mec='w')
-# plt.plot(Qdot[Nt:-1:div],'-', mew=1, ms=8,mec='w')
-# plt.grid()
+plt.figure(2)
+plt.plot(predictions[:,1],'-', mew=1, ms=8,mec='w')
+plt.plot(test_dataset[12,:],'-', mew=1, ms=8,mec='w')
+plt.grid()
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
-# plt.xlabel('time - [s]')
-# plt.legend(['$\hat{\dot{Q}}$', '$\dot{Q}$'])
+plt.xlabel('time - [s]')
+plt.legend(['$\hat{\dot{Q}}$', '$\dot{Q}$'])
 #
 #
-# plt.figure(3)
-# plt.plot(predictions[:,2]*maxRdot,'-', mew=1, ms=8,mec='w')
-# plt.plot(Rdot[Nt:-1:div],'-', mew=1, ms=8,mec='w')
-# plt.grid()
+plt.figure(3)
+plt.plot(predictions[:,2],'-', mew=1, ms=8,mec='w')
+plt.plot(test_dataset[13,:],'-', mew=1, ms=8,mec='w')
+plt.grid()
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
-# plt.xlabel('time - [s]')
-# plt.legend(['$\hat{\dot{R}}$', '$\dot{R}$'])
+plt.xlabel('time - [s]')
+plt.legend(['$\hat{\dot{R}}$', '$\dot{R}$'])
 #
 #
-# plt.figure(4)
-# plt.plot(predictions[:,3]*maxUdot,'-', mew=1, ms=8,mec='w')
-# plt.plot(Udot[Nt:-1:div],'-', mew=1, ms=8,mec='w')
-# plt.title('Acceleration In X Directions')
-# plt.grid()
+plt.figure(4)
+plt.plot(predictions[:,3],'-', mew=1, ms=8,mec='w')
+plt.plot(test_dataset[14,:],'-', mew=1, ms=8,mec='w')
+plt.title('Acceleration In X Directions')
+plt.grid()
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
-# plt.xlabel('Time - [s]')
-# plt.legend(['$\hat{\dot{U}}$', '$\dot{U}$'])
-# plt.ylabel('Acceleration - [m/s$^{2}$]')
-#
-# plt.figure(5)
-# plt.plot(predictions[:,4]*maxVdot,'-', mew=1, ms=8,mec='w')
-# plt.plot(Vdot[Nt:-1:div],'-', mew=1, ms=8,mec='w')
-# plt.grid()
+plt.xlabel('Time - [s]')
+plt.legend(['$\hat{\dot{U}}$', '$\dot{U}$'])
+plt.ylabel('Acceleration - [m/s$^{2}$]')
+
+plt.figure(5)
+plt.plot(predictions[:,4],'-', mew=1, ms=8,mec='w')
+plt.plot(test_dataset[15,:],'-', mew=1, ms=8,mec='w')
+plt.grid()
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
-# plt.xlabel('time - [s]')
-# plt.legend(['$\hat{\dot{V}}$', '$\dot{V}$'])
-#
-# plt.figure(6)
-# plt.plot(predictions[:,5]*maxWdot,'-', mew=1, ms=8,mec='w')
-# plt.plot(Wdot[Nt:-1:div],'-', mew=1, ms=8,mec='w')
-# plt.grid()
+plt.xlabel('time - [s]')
+plt.legend(['$\hat{\dot{V}}$', '$\dot{V}$'])
+
+plt.figure(6)
+plt.plot(predictions[:,5],'-', mew=1, ms=8,mec='w')
+plt.plot(test_dataset[16,:],'-', mew=1, ms=8,mec='w')
+plt.grid()
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
-# plt.xlabel('time - [s]')
-# plt.legend(['$\hat{\dot{W}}$', '$\dot{W}$'])
+plt.xlabel('time - [s]')
+plt.legend(['$\hat{\dot{W}}$', '$\dot{W}$'])
 
 plt.show()
