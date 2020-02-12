@@ -147,9 +147,7 @@ val_mean_abs_error = tf.keras.metrics.MeanAbsoluteError(name='val_mean_abs_error
 def create_ffnn_model(input_shape=10):
 
     model = keras.Sequential([
-    layers.Dense(100,input_shape=(input_shape,),dtype=tf.float64), \
-    layers.ReLU(),\
-    layers.Dense(1000,dtype=tf.float64),\
+    layers.Dense(1000,input_shape=(input_shape,),dtype=tf.float64), \
     layers.ReLU(),\
     layers.Dense(6,dtype=tf.float64)
     ])
@@ -198,11 +196,22 @@ validation_dataset = esl_timeseries_dataset(validation_dataset_path,window_size,
                                         input_indices,output_indices)
 
 forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
-
 # for epoch in trange(epochs):
 for epoch in range(epochs):
+
+    train_progressbar = trange(train_dataset.getTotalBatches(), desc='# training of batch', leave=True)
+    test_progressbar = trange(validation_dataset.getTotalBatches(), desc='# validation of batch', leave=True)
+    train_progressbar_c = 0
+    val_progressbar_c = 0
+
     for x_train, y_train in train_dataset:
-       train_step(forward_dynamics_model, optimizer, x_train, y_train)
+
+        train_progressbar.set_description("# of training batch {}".format(train_progressbar_c))
+        train_progressbar.refresh() # to show immediately the update
+        train_progressbar.update()
+        train_progressbar_c +=1
+
+        train_step(forward_dynamics_model, optimizer, x_train, y_train)
 
     with train_summary_writer.as_default():
         tf.summary.scalar('loss', mean_train_loss.result(), step=epoch)
@@ -210,6 +219,11 @@ for epoch in range(epochs):
         tf.summary.scalar('train_mean_abs_error', train_mean_abs_error.result(), step=epoch)
 
     for (x_test, y_test) in validation_dataset:
+        val_progressbar.set_description("# of validation batch {}".format(val_progressbar_c))
+        val_progressbar.refresh() # to show immediately the update
+        val_progressbar.update()
+        val_progressbar_c +=1
+
         test_step(forward_dynamics_model, x_test, y_test)
 
     if(mean_val_loss.result() < prev_mean_val_loss):

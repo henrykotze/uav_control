@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(\
 
 
 parser.add_argument('-logdir', default='./logs/', help='path to the logs parent direcory')
-parser.add_argument('-drone', default='./griffin.yaml', help='path to the file containing drone corresponding to logs')
+parser.add_argument('-drone', default='', help='path to the file containing drone corresponding to logs')
 parser.add_argument('-add_info', default='', help='add additional information')
 parser.add_argument('-dataset_name', default='dataset', help='name of saved dataset')
 parser.add_argument('-dataset_loc', default='./', help='path to where dataset is saved')
@@ -37,6 +37,9 @@ dataset_name = str(vars(args)['dataset_name'])
 validation_dataset_name = 'validation_' + str(vars(args)['dataset_name'])
 dataset_loc = str(vars(args)['dataset_loc'])
 validation_percentage = float(vars(args)['val_percent'])
+
+if(drone_file_path == ''):
+    raise Exception("Provide a drone file")
 
 
 yamlfile = open(drone_file_path,'r')
@@ -174,8 +177,11 @@ def generateDataset(logs):
     dataset_num_entries=10000000
     counter = 0
     dataset = np.zeros((features,dataset_num_entries))
+    ulog_entry_prev = ''
 
-    for ulog_entry in tqdm(logs):
+    for ulog_entry in tqdm(logs, desc = "log file: {}".format(str(ulog_entry_prev))):
+        ulog_entry_prev = ulog_entry
+        print(ulog_entry)
 
         listOfCSVs = convert_ulog2csv(ulog_entry,log_eoi,'./',',')
 
@@ -310,8 +316,8 @@ def generateDataset(logs):
     return dataset
 
 # log directory
-# log_dir = "/home/henry/esl-sun/PX4/build/px4_sitl_default/logs/"
-log_dir = "./logs/"
+log_dir = "/home/henry/esl-sun/PX4/build/px4_sitl_default/logs/"
+# log_dir = "./logs/"
 # entries of interest
 log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs'
 listOfEOI = log_eoi.split(',')
