@@ -24,7 +24,6 @@ parser.add_argument('-drone', default='', help='path to the file containing dron
 parser.add_argument('-add_info', default='', help='add additional information')
 parser.add_argument('-dataset_name', default='dataset', help='name of saved dataset')
 parser.add_argument('-dataset_loc', default='./', help='path to where dataset is saved')
-parser.add_argument('-val_percent', default=0.1, help='percentage of logs to be used for validations')
 
 args = parser.parse_args()
 
@@ -34,9 +33,7 @@ logdir = vars(args)['logdir']
 drone_file_path = str(vars(args)['drone'])
 addition_info = str(vars(args)['add_info'])
 dataset_name = str(vars(args)['dataset_name'])
-validation_dataset_name = 'validation_' + str(vars(args)['dataset_name'])
 dataset_loc = str(vars(args)['dataset_loc'])
-validation_percentage = float(vars(args)['val_percent'])
 
 if(drone_file_path == ''):
     raise Exception("Provide a drone file")
@@ -338,10 +335,8 @@ description=''
 
 
 numOfLogs=0
-numOfValLogs=0
 listOfLogs=[]
 
-validation_logs=[]
 training_logs=[]
 
 
@@ -357,21 +352,13 @@ for root, dirs, files in os.walk(log_dir):
 # for ulog_entru in tqdm(listOfLogs):
 #     print(ulog_entru)
 
-numOfValLogs = int(np.floor(numOfLogs*validation_percentage))
 
-for x in range(numOfValLogs):
+for x in range(numOfLogs):
     lognum = np.random.randint(0,numOfLogs)
-    validation_logs.append(listOfLogs[lognum])
-
-training_logs = [e for e in listOfLogs if e not in validation_logs]
-
+    training_logs.append(listOfLogs[lognum])
 
 train_dataset = generateDataset(training_logs)
-validation_dataset = generateDataset(validation_logs)
-
-
 train_num_samples=len(train_dataset[0,:])
-val_num_samples=len(validation_dataset[0,:])
 
 
 max_q1 = np.amax(train_dataset[0,:])
@@ -395,44 +382,6 @@ maxR = np.amax(train_dataset[13,:])
 maxUdot = np.amax(train_dataset[14,:])
 maxVdot = np.amax(train_dataset[15,:])
 maxWdot = np.amax(train_dataset[16,:])
-
-
-train_dataset[0,:] = train_dataset[0,:]
-train_dataset[1,:] = train_dataset[1,:]
-train_dataset[2,:] = train_dataset[2,:]
-train_dataset[3,:] = train_dataset[3,:]
-train_dataset[4,:] = train_dataset[4,:]/maxU
-train_dataset[5,:] = train_dataset[5,:]/maxV
-train_dataset[6,:] = train_dataset[6,:]/maxW
-train_dataset[7,:] = train_dataset[7,:]/max_T1
-train_dataset[8,:] = train_dataset[8,:]/max_T2
-train_dataset[9,:] = train_dataset[9,:]/max_T3
-train_dataset[10,:] = train_dataset[10,:]/max_T4
-train_dataset[11,:] = train_dataset[11,:]/maxP
-train_dataset[12,:] = train_dataset[12,:]/maxQ
-train_dataset[13,:] = train_dataset[13,:]/maxR
-train_dataset[14,:] = train_dataset[14,:]/maxUdot
-train_dataset[15,:] = train_dataset[15,:]/maxVdot
-train_dataset[16,:] = train_dataset[16,:]/maxWdot
-
-
-validation_dataset[0,:] = validation_dataset[0,:]
-validation_dataset[1,:] = validation_dataset[1,:]
-validation_dataset[2,:] = validation_dataset[2,:]
-validation_dataset[3,:] = validation_dataset[3,:]
-validation_dataset[4,:] = validation_dataset[4,:]/maxU
-validation_dataset[5,:] = validation_dataset[5,:]/maxV
-validation_dataset[6,:] = validation_dataset[6,:]/maxW
-validation_dataset[7,:] = validation_dataset[7,:]/max_T1
-validation_dataset[8,:] = validation_dataset[8,:]/max_T2
-validation_dataset[9,:] = validation_dataset[9,:]/max_T3
-validation_dataset[10,:] = validation_dataset[10,:]/max_T4
-validation_dataset[11,:] = validation_dataset[11,:]/maxP
-validation_dataset[12,:] = validation_dataset[12,:]/maxQ
-validation_dataset[13,:] = validation_dataset[13,:]/maxR
-validation_dataset[14,:] = validation_dataset[14,:]/maxUdot
-validation_dataset[15,:] = validation_dataset[15,:]/maxVdot
-validation_dataset[16,:] = validation_dataset[16,:]/maxWdot
 
 
 print('\n--------------------------------------------------------------')
@@ -463,13 +412,10 @@ with shelve.open( str(dataset_loc + '/'+dataset_name+'_readme')) as db:
     db['max_q4'] = max_q4
 
     db['train_dataset_num_entries'] = train_num_samples
-    db['validation_dataset_num_entries'] = val_num_samples
     db['numOfLogs'] = len(listOfLogs)
     db['drone_name'] = drone_name
     db['motor_thrust'] = motor_thrust
     db['addition_information'] = str(addition_info)
-    db['name_of_validation_dataset'] = validation_dataset_name
-    db['validation_percentage'] =  validation_percentage
     db['dataset_loc'] = dataset_loc
 
 
@@ -483,13 +429,4 @@ print('--------------------------------------------------------------')
 
 h5f = h5py.File(str(dataset_loc + '/'+dataset_name),'w')
 h5f.create_dataset('dataset', data=train_dataset)
-h5f.close()
-
-
-print('\n--------------------------------------------------------------')
-print('Saving validation dataset:', validation_dataset_name)
-print('--------------------------------------------------------------')
-
-h5f = h5py.File(str(dataset_loc + '/'+validation_dataset_name),'w')
-h5f.create_dataset('dataset', data=validation_dataset)
 h5f.close()

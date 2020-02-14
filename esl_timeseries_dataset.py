@@ -31,7 +31,7 @@ class esl_timeseries_dataset(object):
         print('\n--------------------------------------------------------------')
         print('Reading dataset file: {}'.format(path_to_h5py))
         print('--------------------------------------------------------------')
-        hf = h5py.File(path_to_h5py, 'r')
+        hf = h5py.File(path_to_h5py, 'r+')
         # print('{} contains: {}'.format(path_to_h5py,f.keys()))
         self.dataset = hf['dataset']
         #hf.close()
@@ -106,4 +106,6 @@ class esl_timeseries_dataset(object):
         self.x_indices, self.y_indices = zip(*c)
         self.x_indices = list(self.x_indices)
         self.y_indices = list(self.y_indices)
-        # print(self.x_indices)
+
+    def normalise_dataset(self,val,pos):
+        self.dataset[pos,:] = self.dataset[pos,:]/val

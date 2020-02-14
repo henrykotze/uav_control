@@ -89,6 +89,7 @@ with shelve.open( str(completed_log_dir + '/'+ 'readme')) as db:
 
     with shelve.open(dataset_readme) as db2:
         name_validation_dataset = db2['name_of_validation_dataset']
+        dataset_loc = db2['dataset_loc']
         for key,value in db2.items():
             db[str(key)] = value
 
@@ -149,7 +150,23 @@ def create_ffnn_model(input_shape=10):
     model = keras.Sequential([
     layers.Dense(1000,input_shape=(input_shape,),dtype=tf.float64), \
     layers.ReLU(),\
+    # layers.Dense(1000,dtype=tf.float64),\
+    # layers.ReLU(),\
     layers.Dense(6,dtype=tf.float64)
+    ])
+    model.summary()
+
+    return model
+
+
+
+# Building model
+def create_lstm_model(input_shape=10,batchsize=0):
+
+    model = keras.Sequential([
+    layers.LSTM(512,return_sequences=True,input_shape=(batchsize,input_shape)),
+    layers.Dense(6,dtype=tf.float64)
+    # layers.ReLU()
     ])
     model.summary()
 
@@ -183,7 +200,7 @@ def test_step(model, x_test, y_test):
 
 
 
-validation_dataset_path = './dataset_sim/hanabi_test'
+validation_dataset_path = str(dataset_loc) + str(name_validation_dataset)
 
 # [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4]
 input_indices= [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -196,20 +213,17 @@ validation_dataset = esl_timeseries_dataset(validation_dataset_path,window_size,
                                         input_indices,output_indices)
 
 forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
+# forward_dynamics_model = create_lstm_model()
 # for epoch in trange(epochs):
 for epoch in range(epochs):
 
-    train_progressbar = trange(train_dataset.getTotalBatches(), desc='# training of batch', leave=True)
-    test_progressbar = trange(validation_dataset.getTotalBatches(), desc='# validation of batch', leave=True)
-    train_progressbar_c = 0
-    val_progressbar_c = 0
+    train_progressbar = trange(train_dataset.getTotalBatches(), desc='training batch #', leave=True)
+    test_progressbar = trange(validation_dataset.getTotalBatches(), desc='validation batch #', leave=True)
 
     for x_train, y_train in train_dataset:
-
-        train_progressbar.set_description("# of training batch {}".format(train_progressbar_c))
+        train_progressbar.set_description("training batch")
         train_progressbar.refresh() # to show immediately the update
         train_progressbar.update()
-        train_progressbar_c +=1
 
         train_step(forward_dynamics_model, optimizer, x_train, y_train)
 
@@ -219,12 +233,14 @@ for epoch in range(epochs):
         tf.summary.scalar('train_mean_abs_error', train_mean_abs_error.result(), step=epoch)
 
     for (x_test, y_test) in validation_dataset:
-        val_progressbar.set_description("# of validation batch {}".format(val_progressbar_c))
-        val_progressbar.refresh() # to show immediately the update
-        val_progressbar.update()
-        val_progressbar_c +=1
+
+        test_progressbar.set_description("validation batch")
+        test_progressbar.refresh() # to show immediately the update
+        test_progressbar.update()
 
         test_step(forward_dynamics_model, x_test, y_test)
+
+    print("")
 
     if(mean_val_loss.result() < prev_mean_val_loss):
 

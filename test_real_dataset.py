@@ -75,9 +75,16 @@ with shelve.open(model_readme) as db:
     maxUdot = db['maxUdot']
     maxVdot = db['maxVdot']
     maxWdot = db['maxWdot']
+    maxU = db['maxU']
+    maxV = db['maxV']
+    maxW = db['maxW']
     maxP = db['maxP']
     maxQ = db['maxQ']
     maxR = db['maxR']
+    max_T1 = db['max_T1']
+    max_T2 = db['max_T2']
+    max_T3 = db['max_T3']
+    max_T4 = db['max_T4']
     dronename = db['drone_name']
 
     for key,value in db.items():
@@ -114,6 +121,14 @@ output_indices = [11, 12, 13, 14, 15, 16]
 
 test_dataset = esl_timeseries_dataset(dataset,window_size,1,batchsize,input_indices,
                 output_indices,shuffle=False)
+
+test_dataset.normalise_dataset(4,maxU)
+test_dataset.normalise_dataset(5,maxV)
+test_dataset.normalise_dataset(6,maxW)
+test_dataset.normalise_dataset(7,max_T1)
+test_dataset.normalise_dataset(8,max_T2)
+test_dataset.normalise_dataset(9,max_T3)
+test_dataset.normalise_dataset(10,max_T4)
 
 
 counter = window_size
@@ -170,7 +185,7 @@ plt.legend(['$\hat{R}$', '$R$'])
 #
 #
 plt.figure(4)
-plt.plot(predictions[:,3],'-', mew=1, ms=8,mec='w')
+plt.plot(predictions[:,3]*maxUdot,'-', mew=1, ms=8,mec='w')
 plt.plot(test_dataset[14,:],'-', mew=1, ms=8,mec='w')
 plt.title('Acceleration In X Directions')
 plt.grid()
@@ -180,7 +195,7 @@ plt.legend(['$\hat{\dot{U}}$', '$\dot{U}$'])
 plt.ylabel('Acceleration - [m/s$^{2}$]')
 
 plt.figure(5)
-plt.plot(predictions[:,4],'-', mew=1, ms=8,mec='w')
+plt.plot(predictions[:,4]*maxVdot,'-', mew=1, ms=8,mec='w')
 plt.plot(test_dataset[15,:],'-', mew=1, ms=8,mec='w')
 plt.grid()
 plt.title('Acceleration In Y Directions')
@@ -189,7 +204,7 @@ plt.xlabel('time - [s]')
 plt.legend(['$\hat{\dot{V}}$', '$\dot{V}$'])
 
 plt.figure(6)
-plt.plot(predictions[:,5],'-', mew=1, ms=8,mec='w')
+plt.plot(predictions[:,5]*maxWdot,'-', mew=1, ms=8,mec='w')
 plt.plot(test_dataset[16,:],'-', mew=1, ms=8,mec='w')
 plt.grid()
 plt.title('Acceleration In Z Directions')

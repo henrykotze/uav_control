@@ -10,3 +10,5 @@
 **/dataset_sim
 **/logs
 **/trained_models
+**/dataset_real
+**/flight_data
