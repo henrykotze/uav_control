@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-
-
 import tensorflow as tf
 import numpy as np
 from tensorflow import keras
@@ -148,10 +146,10 @@ val_mean_abs_error = tf.keras.metrics.MeanAbsoluteError(name='val_mean_abs_error
 def create_ffnn_model(input_shape=10):
 
     model = keras.Sequential([
-    layers.Dense(1000,input_shape=(input_shape,),dtype=tf.float64), \
+    layers.Dense(100,input_shape=(input_shape,)), \
     layers.ReLU(),\
-    # layers.Dense(1000,dtype=tf.float64),\
-    # layers.ReLU(),\
+    layers.Dense(100,dtype=tf.float64),\
+    layers.ReLU(),\
     layers.Dense(6,dtype=tf.float64)
     ])
     model.summary()
@@ -161,15 +159,17 @@ def create_ffnn_model(input_shape=10):
 
 
 # Building model
-def create_lstm_model(input_shape=10,batchsize=0):
+def create_lstm_model(batchsize,timesteps,features):
+
 
     model = keras.Sequential([
-    layers.LSTM(512,return_sequences=True,input_shape=(batchsize,input_shape)),
-    layers.Dense(6,dtype=tf.float64)
-    # layers.ReLU()
+    # keras.layers.TimeDistributed(keras.layers.Dense(8),input_shape=(timesteps,features) ),
+    keras.layers.LSTM(10,input_shape=(batchsize,timesteps,features)),
+    keras.layers.Dense(10),
+    keras.layers.ReLU()
     ])
-    model.summary()
 
+    model.summary()
     return model
 
 
@@ -212,8 +212,11 @@ train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size,
 validation_dataset = esl_timeseries_dataset(validation_dataset_path,window_size,step,batch_size,
                                         input_indices,output_indices)
 
-forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
-# forward_dynamics_model = create_lstm_model()
+# def create_lstm_model(batchsize,timesteps,features):
+
+forward_dynamics_model = create_lstm_model(batch_size,window_size,11)
+keras.utils.plot_model(forward_dynamics_model, str(completed_log_dir + '/'+ name_of_model + '.png'), show_shapes=True)
+
 # for epoch in trange(epochs):
 for epoch in range(epochs):
 
