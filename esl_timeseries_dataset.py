@@ -107,5 +107,5 @@ class esl_timeseries_dataset(object):
         self.x_indices = list(self.x_indices)
         self.y_indices = list(self.y_indices)
 
-    def normalise_dataset(self,val,pos):
+    def normalise_dataset(self,pos,val):
         self.dataset[pos,:] = self.dataset[pos,:]/val

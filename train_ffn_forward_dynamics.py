@@ -48,7 +48,7 @@ print('----------------------------------------------------------------')
 print("TensorFlow version: {}".format(tf.__version__))
 print("Eager execution: {}".format(tf.executing_eagerly()))
 print('----------------------------------------------------------------')
-
+tf.keras.backend.set_floatx('float64')
 
 print('----------------------------------------------------------------')
 print('Fetching training info from: {}'.format(dataset_readme))
@@ -146,11 +146,11 @@ val_mean_abs_error = tf.keras.metrics.MeanAbsoluteError(name='val_mean_abs_error
 def create_ffnn_model(input_shape=10):
 
     model = keras.Sequential([
-    layers.Dense(100,input_shape=(input_shape,)), \
+    layers.Dense(1000,input_shape=(input_shape,)), \
     layers.ReLU(),\
-    layers.Dense(100,dtype=tf.float64),\
+    layers.Dense(1000),\
     layers.ReLU(),\
-    layers.Dense(6,dtype=tf.float64)
+    layers.Dense(6)
     ])
     model.summary()
 
@@ -159,24 +159,25 @@ def create_ffnn_model(input_shape=10):
 
 
 # Building model
-def create_lstm_model(batchsize,timesteps,features):
-
-
-    model = keras.Sequential([
-    # keras.layers.TimeDistributed(keras.layers.Dense(8),input_shape=(timesteps,features) ),
-    keras.layers.LSTM(10,input_shape=(batchsize,timesteps,features)),
-    keras.layers.Dense(10),
-    keras.layers.ReLU()
-    ])
-
-    model.summary()
-    return model
+# def create_lstm_model(batchsize,timesteps,features):
+#
+#
+#     model = keras.Sequential([
+#     # keras.layers.TimeDistributed(keras.layers.Dense(8),input_shape=(timesteps,features) ),
+#     keras.layers.LSTM(10,input_shape=(batchsize,timesteps,features)),
+#     keras.layers.Dense(10),
+#     keras.layers.ReLU()
+#     ])
+#
+#     model.summary()
+#     return model
 
 
 def mae_and_weight_reg_loss(predictions,ground_truth,vars):
     loss1 = mae(predictions,ground_truth)
-    loss2 = tf.add_n([tf.nn.l2_loss(v) for v in vars])*weight_regularisation
-    return loss1+loss2
+    lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in vars if 'bias' not in v.name ])*weight_regularisation
+    # loss2 = tf.add_n([tf.nn.l2_loss(v) for v in vars])*weight_regularisation
+    return loss1 + lossL2
 
 
 def train_step(model, optimizer, x_train, y_train):
@@ -214,7 +215,7 @@ validation_dataset = esl_timeseries_dataset(validation_dataset_path,window_size,
 
 # def create_lstm_model(batchsize,timesteps,features):
 
-forward_dynamics_model = create_lstm_model(batch_size,window_size,11)
+forward_dynamics_model = create_ffnn_model(train_dataset.get_input_shape())
 keras.utils.plot_model(forward_dynamics_model, str(completed_log_dir + '/'+ name_of_model + '.png'), show_shapes=True)
 
 # for epoch in trange(epochs):
@@ -243,7 +244,6 @@ for epoch in range(epochs):
 
         test_step(forward_dynamics_model, x_test, y_test)
 
-    print("")
 
     if(mean_val_loss.result() < prev_mean_val_loss):
 
@@ -260,6 +260,8 @@ for epoch in range(epochs):
             db['mean_val_loss'] = float(mean_val_loss.result())
 
         db.close()
+
+    print("======================================================")
 
 
     with test_summary_writer.as_default():

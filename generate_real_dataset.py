@@ -322,8 +322,9 @@ def generateDataset(logs):
 
 # log directory
 # log_dir = "/home/henry/esl-sun/PX4/build/px4_sitl_default/logs/"
-# log_dir = "./logs/"
-log_dir = "./flight_data"
+# log_dir = "./logs/wasp/flight1/"
+# log_dir = "./flight_data/wasp/flight1/"
+log_dir = "./flight_data/hanabi/"
 # entries of interest
 log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs'
 listOfEOI = log_eoi.split(',')
