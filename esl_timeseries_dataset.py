@@ -72,15 +72,18 @@ class esl_timeseries_dataset(object):
 
     def __next__(self):
 
-        x_train = np.zeros((self.batchsize,self.windowsize*self.total_inputs))
-        y_train = np.zeros((self.batchsize,self.total_labels))
+        x_train = np.zeros((self.batchsize,self.windowsize,self.total_inputs))
+        y_train = np.zeros((self.total_labels,self.batchsize))
+        # print(x_train)
 
         if(self.n < self.num_batches):
 
             for batch_counter in range(self.batchsize):
-
-                x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.batchsize*self.n+batch_counter]][self.input_indices].flatten()
-                y_train[batch_counter,:] = self.dataset[:,self.y_indices[self.batchsize*self.n+batch_counter]][self.output_indices]
+                # print(x_train[batch_counter,:,:])
+                x_train[batch_counter,:,:] = self.dataset[:,self.x_indices[self.batchsize*self.n+batch_counter]][self.input_indices].transpose()
+                # print(self.dataset[:,self.x_indices[self.batchsize*self.n+batch_counter]][self.input_indices].transpose())
+                # x_train[:,batch_counter] = self.dataset[:,self.x_indices[self.batchsize*self.n+batch_counter]][self.input_indices].transpose()
+                # y_train[:,batch_counter] = self.dataset[:,self.y_indices[self.batchsize*self.n+batch_counter]][self.output_indices]
 
 
             self.n += 1
