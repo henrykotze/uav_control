@@ -139,14 +139,14 @@ test_dataset.normalise_dataset(16,maxWdot)
 
 counter = window_size
 total_predictions = test_dataset.getTotalPredictions()
-predictions = np.zeros((total_predictions+batchsize,6))
+predictions = np.zeros((total_predictions+3*batchsize,6))
 
-# test_progressbar = trange(total_predictions, desc='validation batch #', leave=True)
+test_progressbar = trange(test_dataset.getTotalBatches(), desc='validation batch #', leave=True)
 for (x_test, y_test) in test_dataset:
 
-    # test_progressbar.set_description("batch #")
-    # test_progressbar.refresh() # to show immediately the update
-    # test_progressbar.update()
+    test_progressbar.set_description("batch #")
+    test_progressbar.refresh() # to show immediately the update
+    test_progressbar.update()
 
     predict = model.predict(x_test)
     predictions[counter:counter+batchsize,:] = predict
