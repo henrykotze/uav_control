@@ -118,7 +118,7 @@ test_dataset = esl_timeseries_dataset(dataset,window_size,1,batchsize,input_indi
 
 counter = window_size
 total_predictions = test_dataset.getTotalPredictions()
-predictions = np.zeros((total_predictions+batchsize,6))
+predictions = np.zeros((total_predictions+3*batchsize,6))
 
 # test_progressbar = trange(total_predictions, desc='validation batch #', leave=True)
 for (x_test, y_test) in test_dataset:
@@ -142,7 +142,7 @@ plt.plot(predictions[:,0],'-', mew=1, ms=8,mec='w')
 plt.plot(test_dataset[11,:],'-', mew=1, ms=8,mec='w')
 # plt.plot(lol.transpose(),'-', mew=1, ms=8,mec='w')
 plt.grid()
-plt.legend(['$\hat{P}$', '$P$'])
+# plt.legend(['$\hat{P}$', '$P$'])
 plt.title('Pitch Rate')
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
 plt.xlabel('Time - [s]')
@@ -156,7 +156,7 @@ plt.ylabel('Roll Rate - [rad/s]')
 plt.title('Roll Rate')
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
 plt.xlabel('time - [s]')
-plt.legend(['$\hat{Q}$', '$Q$'])
+# plt.legend(['$\hat{Q}$', '$Q$'])
 #
 #
 plt.figure(3)
@@ -166,7 +166,7 @@ plt.title('Yaw Rate')
 plt.grid()
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
 plt.xlabel('time - [s]')
-plt.legend(['$\hat{R}$', '$R$'])
+# plt.legend(['$\hat{R}$', '$R$'])
 #
 #
 plt.figure(4)
@@ -176,7 +176,7 @@ plt.title('Acceleration In X Directions')
 plt.grid()
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
 plt.xlabel('Time - [s]')
-plt.legend(['$\hat{\dot{U}}$', '$\dot{U}$'])
+# plt.legend(['$\hat{\dot{U}}$', '$\dot{U}$'])
 plt.ylabel('Acceleration - [m/s$^{2}$]')
 
 plt.figure(5)
@@ -186,7 +186,7 @@ plt.grid()
 plt.title('Acceleration In Y Directions')
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
 plt.xlabel('time - [s]')
-plt.legend(['$\hat{\dot{V}}$', '$\dot{V}$'])
+# plt.legend(['$\hat{\dot{V}}$', '$\dot{V}$'])
 
 plt.figure(6)
 plt.plot(predictions[:,5],'-', mew=1, ms=8,mec='w')
@@ -195,6 +195,6 @@ plt.grid()
 plt.title('Acceleration In Z Directions')
 # plt.xticks(graph_ticks_spacing, graph_ticks_words )
 plt.xlabel('time - [s]')
-plt.legend(['$\hat{\dot{W}}$', '$\dot{W}$'])
+# plt.legend(['$\hat{\dot{W}}$', '$\dot{W}$'])
 
 plt.show()

@@ -315,17 +315,17 @@ def generateDataset(logs):
         # perhaps delete *.csv
         counter += size_local_position
 
-        if(counter >= dataset_num_entries):
+        if(counter + 3*size_local_position >= dataset_num_entries):
             dataset_num_entries += 1000000
-            dataset = np.hstack((dataset,np.zeros(features,1000000)))
+            dataset = np.hstack((dataset,np.zeros((features,1000000))))
 
     # resize dataset by using counter variable
     dataset = np.delete(dataset,slice(counter,dataset_num_entries,1),1)
     return dataset
 
 # log directory
-log_dir = "/home/henry/esl-sun/PX4/build/px4_sitl_default/logs/"
-# log_dir = "./logs/"
+# log_dir = "/home/henry/esl-sun/PX4/build/px4_sitl_default/logs/"
+log_dir = "./logs/"
 # log_dir = "./flight_data"
 # entries of interest
 log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs'

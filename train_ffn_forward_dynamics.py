@@ -157,22 +157,6 @@ def create_ffnn_model(input_shape=10):
     return model
 
 
-
-# Building model
-# def create_lstm_model(batchsize,timesteps,features):
-#
-#
-#     model = keras.Sequential([
-#     # keras.layers.TimeDistributed(keras.layers.Dense(8),input_shape=(timesteps,features) ),
-#     keras.layers.LSTM(10,input_shape=(batchsize,timesteps,features)),
-#     keras.layers.Dense(10),
-#     keras.layers.ReLU()
-#     ])
-#
-#     model.summary()
-#     return model
-
-
 def mae_and_weight_reg_loss(predictions,ground_truth,vars):
     loss1 = mae(predictions,ground_truth)
     lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in vars if 'bias' not in v.name ])*weight_regularisation
@@ -246,20 +230,21 @@ for epoch in range(epochs):
 
 
     if(mean_val_loss.result() < prev_mean_val_loss):
-
         print('val loss improved from {} to {}'.format(prev_mean_val_loss,mean_val_loss.result()))
-        prev_mean_val_loss = mean_val_loss.result()
-        print(checkpoint_log_path.format(epoch))
-        forward_dynamics_model.save(checkpoint_log_path.format(epoch))
 
 
-        with shelve.open( str(checkpoint_log_dir + '/'+ 'readme')) as db:
+    prev_mean_val_loss = mean_val_loss.result()
+    print(checkpoint_log_path.format(epoch))
+    forward_dynamics_model.save(checkpoint_log_path.format(epoch))
 
-            db['train_mean_abs_error'] = float(train_mean_abs_error.result())
-            db['mean_train_loss'] = float(mean_train_loss.result())
-            db['mean_val_loss'] = float(mean_val_loss.result())
 
-        db.close()
+    with shelve.open( str(checkpoint_log_dir + '/'+ 'readme')) as db:
+
+        db['train_mean_abs_error'] = float(train_mean_abs_error.result())
+        db['mean_train_loss'] = float(mean_train_loss.result())
+        db['mean_val_loss'] = float(mean_val_loss.result())
+
+    db.close()
 
     print("======================================================")
 

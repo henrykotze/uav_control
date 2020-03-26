@@ -7,7 +7,7 @@ from esl_timeseries_dataset import esl_timeseries_dataset
 
 dataset_name='./test.h5f'
 
-fake_dataset = np.arange(0,100).reshape(5,20).transpose()
+fake_dataset = np.arange(0,100).reshape(5,20)
 print(fake_dataset)
 
 
@@ -25,15 +25,15 @@ test_dataset = esl_timeseries_dataset(dataset_name,window_size,1,batchsize,input
                 output_indices,shuffle=False)
 
 
-print(test_dataset.getNumSamples())
-
-
+# print(test_dataset.getNumSamples())
+#
+#
 c = 0
-
+#
 for x_train,y_train in test_dataset:
 #
-     # print(x_train)
-     print(x_train.reshape(2,3,5))
+     print(x_train)
+     # print(x_train.reshape(2,3,5))
      print(y_train)
      print("============")
      c+=1

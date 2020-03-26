@@ -330,7 +330,6 @@ log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs'
 listOfEOI = log_eoi.split(',')
 
 
-description=''
 
 
 

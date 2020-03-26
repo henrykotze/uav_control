@@ -33,12 +33,14 @@ class esl_timeseries_dataset(object):
         print('--------------------------------------------------------------')
         hf = h5py.File(path_to_h5py, 'r+')
         # print('{} contains: {}'.format(path_to_h5py,f.keys()))
-        self.dataset = hf['dataset']
-        #hf.close()
+        self.dataset = hf['dataset'][:]
+        # hf.close()
         self.shape = self.dataset.shape
         self.total_samples = int(np.floor(self.shape[1]))
         self.total_inputs = len(self.input_indices)
         self.total_labels = len(self.output_indices)
+
+        hf.close()
 
         start_index = self.windowsize
 
