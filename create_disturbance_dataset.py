@@ -202,8 +202,8 @@ def generateDataset(list_ulogs,list_disturbance_logs):
 
         # disturbance
         df = pd.read_csv(disturbance_log)
-
-        timestamp_disturb = np.array(df['timestamp'].tolist())
+        # time 10^6, since px4 does logging in microseconds
+        timestamp_disturb = np.array(df['timestamp'].tolist())*1000000
         fx = np.array(df['fx'].tolist())
         fy = np.array(df['fy'].tolist())
         fz = np.array(df['fz'].tolist())
@@ -211,7 +211,6 @@ def generateDataset(list_ulogs,list_disturbance_logs):
         my = np.array(df['my'].tolist())
         mz = np.array(df['mz'].tolist())
 
-        # print([s for s in listOfCSVs if listOfEOI[0] in s][0])
 
         # vehicle_attitude csv
         df = pd.read_csv([s for s in listOfCSVs if listOfEOI[1] in s][0])
@@ -367,7 +366,6 @@ def generateDataset(list_ulogs,list_disturbance_logs):
 # log directory
 # log_dir = "/home/henry/esl-sun/PX4/build/px4_sitl_default/logs/"
 log_dir = "./logs/"
-# log_dir = "./flight_data"
 # entries of interest
 log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs'
 listOfEOI = log_eoi.split(',')
@@ -446,6 +444,14 @@ maxVdot = np.amax(train_dataset[15,:])
 maxWdot = np.amax(train_dataset[16,:])
 
 
+maxfx = np.amax(train_dataset[17,:])
+maxfy = np.amax(train_dataset[18,:])
+maxfz = np.amax(train_dataset[19,:])
+maxmx = np.amax(train_dataset[20,:])
+maxmy = np.amax(train_dataset[21,:])
+maxmz = np.amax(train_dataset[22,:])
+
+
 train_dataset[0,:] = train_dataset[0,:]
 train_dataset[1,:] = train_dataset[1,:]
 train_dataset[2,:] = train_dataset[2,:]
@@ -463,6 +469,13 @@ train_dataset[13,:] = train_dataset[13,:]/maxR
 train_dataset[14,:] = train_dataset[14,:]/maxUdot
 train_dataset[15,:] = train_dataset[15,:]/maxVdot
 train_dataset[16,:] = train_dataset[16,:]/maxWdot
+
+train_dataset[17,:] = train_dataset[17,:]/maxfx
+train_dataset[18,:] = train_dataset[18,:]/maxfy
+train_dataset[19,:] = train_dataset[19,:]/maxfz
+train_dataset[20,:] = train_dataset[20,:]/maxmx
+train_dataset[21,:] = train_dataset[21,:]/maxmy
+train_dataset[22,:] = train_dataset[22,:]/maxmz
 
 
 validation_dataset[0,:] = validation_dataset[0,:]
@@ -482,6 +495,12 @@ validation_dataset[13,:] = validation_dataset[13,:]/maxR
 validation_dataset[14,:] = validation_dataset[14,:]/maxUdot
 validation_dataset[15,:] = validation_dataset[15,:]/maxVdot
 validation_dataset[16,:] = validation_dataset[16,:]/maxWdot
+validation_dataset[17,:] = validation_dataset[17,:]/maxfx
+validation_dataset[18,:] = validation_dataset[18,:]/maxfy
+validation_dataset[19,:] = validation_dataset[19,:]/maxfz
+validation_dataset[20,:] = validation_dataset[20,:]/maxmx
+validation_dataset[21,:] = validation_dataset[21,:]/maxmy
+validation_dataset[22,:] = validation_dataset[22,:]/maxmz
 
 
 print('\n--------------------------------------------------------------')
@@ -510,6 +529,15 @@ with shelve.open( str(dataset_loc + '/'+dataset_name+'_readme')) as db:
     db['max_q2'] = max_q2
     db['max_q3'] = max_q3
     db['max_q4'] = max_q4
+
+
+    db['maxfx'] = maxfx
+    db['maxfy'] = maxfy
+    db['maxfz'] = maxfz
+
+    db['maxmx'] = maxmx
+    db['maxmy'] = maxmy
+    db['maxmz'] = maxmz
 
     db['train_dataset_num_entries'] = train_num_samples
     db['validation_dataset_num_entries'] = val_num_samples
