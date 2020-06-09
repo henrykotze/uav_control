@@ -182,15 +182,13 @@ def generateDataset(list_ulogs,list_disturbance_logs):
     ulog_entry_prev = ''
 
 
-    log_progressbar = trange(len(logs), desc='', leave=True)
+    log_progressbar = trange(len(list_ulogs), desc='', leave=True)
 
     # for ulog_entry in tqdm(logs, desc = "log file: {}".format(str(ulog_entry_prev))):
     for ulog_entry in list_ulogs:
 
         # print(ulog_entry)
-
-        disturbance_log = difflib.get_close_matches(ulog_entry, list_disturbance_logs,n=1)
-        print(disturbance_log)
+        disturbance_log = str(difflib.get_close_matches(ulog_entry, list_disturbance_logs,n=1)[0])
 
         log_progressbar.set_description("log: {}".format(ulog_entry))
         log_progressbar.refresh() # to show immediately the update
@@ -203,7 +201,7 @@ def generateDataset(list_ulogs,list_disturbance_logs):
         # disturbance
         df = pd.read_csv(disturbance_log)
         # time 10^6, since px4 does logging in microseconds
-        timestamp_disturb = np.array(df['timestamp'].tolist())*1000000
+        timestamp_disturb = np.floor(np.array(df['timestamp'].tolist())*1000000).astype(int)
         fx = np.array(df['fx'].tolist())
         fy = np.array(df['fy'].tolist())
         fz = np.array(df['fz'].tolist())
@@ -273,13 +271,19 @@ def generateDataset(list_ulogs,list_disturbance_logs):
 
         time_keeper = 0
         for value in timestamp_local_position:
-            loc = find_nearest(timestamp_disturb,value)
-            fx_[time_keeper] = fx[loc]
-            fy_[time_keeper] = fy[loc]
-            fz_[time_keeper] = fz[loc]
-            mx_[time_keeper] = mx[loc]
-            my_[time_keeper] = my[loc]
-            mz_[time_keeper] = mz[loc]
+
+            if(value >= 20000000 and value <= 50000000):
+                loc = find_nearest(timestamp_disturb,value)
+
+
+                print(value,timestamp_disturb[loc])
+
+                fx_[time_keeper] = fx[loc]
+                fy_[time_keeper] = fy[loc]
+                fz_[time_keeper] = fz[loc]
+                mx_[time_keeper] = mx[loc]
+                my_[time_keeper] = my[loc]
+                mz_[time_keeper] = mz[loc]
 
             time_keeper += 1
 
@@ -396,7 +400,7 @@ for root, dirs, files in os.walk(log_dir):
         if(ext == '.ulg'):
             listOfULogs.append(log_name)
 
-        elif(ext == '.csv'):
+        elif(ext == '.dist'):
             listOfDisturbances.append(log_name)
 
 # convert all found *.ulog files into *.cvs type format and store in desired dir
@@ -470,12 +474,12 @@ train_dataset[14,:] = train_dataset[14,:]/maxUdot
 train_dataset[15,:] = train_dataset[15,:]/maxVdot
 train_dataset[16,:] = train_dataset[16,:]/maxWdot
 
-train_dataset[17,:] = train_dataset[17,:]/maxfx
-train_dataset[18,:] = train_dataset[18,:]/maxfy
-train_dataset[19,:] = train_dataset[19,:]/maxfz
-train_dataset[20,:] = train_dataset[20,:]/maxmx
-train_dataset[21,:] = train_dataset[21,:]/maxmy
-train_dataset[22,:] = train_dataset[22,:]/maxmz
+train_dataset[17,:] = train_dataset[17,:]
+train_dataset[18,:] = train_dataset[18,:]
+train_dataset[19,:] = train_dataset[19,:]
+train_dataset[20,:] = train_dataset[20,:]
+train_dataset[21,:] = train_dataset[21,:]
+train_dataset[22,:] = train_dataset[22,:]
 
 
 validation_dataset[0,:] = validation_dataset[0,:]
@@ -498,9 +502,9 @@ validation_dataset[16,:] = validation_dataset[16,:]/maxWdot
 validation_dataset[17,:] = validation_dataset[17,:]/maxfx
 validation_dataset[18,:] = validation_dataset[18,:]/maxfy
 validation_dataset[19,:] = validation_dataset[19,:]/maxfz
-validation_dataset[20,:] = validation_dataset[20,:]/maxmx
-validation_dataset[21,:] = validation_dataset[21,:]/maxmy
-validation_dataset[22,:] = validation_dataset[22,:]/maxmz
+validation_dataset[20,:] = validation_dataset[20,:]
+validation_dataset[21,:] = validation_dataset[21,:]
+validation_dataset[22,:] = validation_dataset[22,:]
 
 
 print('\n--------------------------------------------------------------')
@@ -541,7 +545,7 @@ with shelve.open( str(dataset_loc + '/'+dataset_name+'_readme')) as db:
 
     db['train_dataset_num_entries'] = train_num_samples
     db['validation_dataset_num_entries'] = val_num_samples
-    db['numOfLogs'] = len(listOfLogs)
+    db['numOfLogs'] = len(listOfULogs)
     db['drone_name'] = drone_name
     db['motor_thrust'] = motor_thrust
     db['addition_information'] = str(addition_info)
