@@ -80,7 +80,8 @@ class esl_timeseries_dataset(object):
         if(self.n < self.num_batches):
 
             for batch_counter in range(self.batchsize):
-
+                # print(self.dataset[:,self.x_indices[self.batchsize*self.n+batch_counter]][self.input_indices].flatten())
+                # print(self.dataset[:,self.y_indices[self.batchsize*self.n+batch_counter]][self.output_indices])
                 x_train[batch_counter,:] = self.dataset[:,self.x_indices[self.batchsize*self.n+batch_counter]][self.input_indices].flatten()
                 y_train[batch_counter,:] = self.dataset[:,self.y_indices[self.batchsize*self.n+batch_counter]][self.output_indices]
 

@@ -127,6 +127,7 @@ test_summary_writer = tf.summary.create_file_writer(test_log_dir)
 
 # CUSTOM TRAINING
 mae = tf.keras.losses.MeanAbsoluteError()
+mse = tf.keras.losses.MeanSquaredError()
 optimizer = tf.keras.optimizers.Adam()
 
 #  METRICS
@@ -148,13 +149,17 @@ def create_ffnn_model(input_shape=10):
     model = keras.Sequential([
     layers.Dense(1000,input_shape=(input_shape,)), \
     layers.ReLU(),\
-    layers.Dense(1000),\
-    layers.ReLU(),\
-    layers.Dense(6)
+    layers.Dense(3)
     ])
     model.summary()
 
     return model
+
+def mse_and_weight_reg_loss(predictions,ground_truth,vars):
+    loss1 = mse(predictions,ground_truth)
+    lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in vars if 'bias' not in v.name ])*weight_regularisation
+    # loss2 = tf.add_n([tf.nn.l2_loss(v) for v in vars])*weight_regularisation
+    return loss1 + lossL2
 
 
 def mae_and_weight_reg_loss(predictions,ground_truth,vars):
@@ -170,7 +175,7 @@ def train_step(model, optimizer, x_train, y_train):
         predictions = model(x_train, training=True)
         train_mean_sqrd_error.update_state(y_train,predictions)
         train_mean_abs_error.update_state(y_train,predictions)
-        loss = mae_and_weight_reg_loss(y_train, predictions, model.trainable_variables)
+        loss = mse_and_weight_reg_loss(y_train, predictions, model.trainable_variables)
         mean_train_loss.update_state(loss)
 
         grads = tape.gradient(loss, model.trainable_variables)
@@ -185,16 +190,13 @@ def test_step(model, x_test, y_test):
 
 
 
-validation_dataset_path = str(dataset_loc) + str(name_validation_dataset)
+validation_dataset_path = str(dataset_loc) + str("/"+name_validation_dataset)
 
-# [q1,q2,q3,q4,U,V,W,T1,T2,T3,T4,P,Q,R,Udot,Vdot,Wdot]
-input_indices= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
-# [fx,fy,fz,mx,my,mz]
-output_indices = [17,18,19,20,21,22,23]
+input_indices= np.arange(0,27).tolist()
+output_indices = np.arange(27,30).tolist()
 
 train_dataset = esl_timeseries_dataset(dataset_path,window_size,step,batch_size,
                                         input_indices,output_indices)
-
 validation_dataset = esl_timeseries_dataset(validation_dataset_path,window_size,step,batch_size,
                                         input_indices,output_indices)
 

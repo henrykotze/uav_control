@@ -11,6 +11,8 @@ import h5py
 from terminaltables import AsciiTable
 import yaml
 import difflib
+import datetime
+import random
 
 
 
@@ -92,6 +94,25 @@ def find_nearest(array,value):
         # return array[idx]
         return idx
 
+
+def find_nearest_timestamp(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]
+
+def timeSinceEpoch(filename):
+    fn_path,fn = os.path.split(filename)
+
+    fn_date = (fn_path.split('/')[2]).split('-')
+
+    fn = os.path.splitext(fn)[0]
+    h,m,s = fn.split('_')
+
+    # print(int(datetime.timedelta(hours=int(dstrb_h),minutes=int(dstrb_m),seconds=int(dstrb_s)).total_seconds()))
+    timestamp = int(datetime.datetime(int(fn_date[0]), int(fn_date[1]),int(fn_date[2]),int(h),int(m),int(s)).timestamp())
+    return timestamp
+
+
 def convert_ulog2csv(ulog_file_name, messages, output, delimiter, disable_str_exceptions=False):
     """
     Coverts and ULog file to a CSV file.
@@ -160,22 +181,23 @@ def convert_ulog2csv(ulog_file_name, messages, output, delimiter, disable_str_ex
     return path2CSVs
 
 
-def whitening_dataset(dataset,features):
-    ''' Whitening of dataset '''
-    mean = np.mean(dataset,1).reshape(features,1)
-    std = np.std(dataset,1).reshape(features,1)
+def normalise_dataset(dataset):
+    mean = np.mean(dataset,axis=1)
+    std = np.std(dataset,axis=1)
 
-    dataset = (dataset-mean)/std
+    dataset = (dataset-mean[:,np.newaxis])/std[:,np.newaxis]
     return [dataset,mean,std]
 
+def minmax_feature_scaling(dataset):
+    max = np.amax(dataset,axis=1)
+    min = np.amin(dataset,axis=1)
+    dataset = dataset-min[:,np.newaxis]/((max-min)[:,np.newaxis])
+    return dataset,max,min
 
-
-def normalise_dataset(dataset,features):
-    max = np.amax(dataset,1)
 
 def generateDataset(list_ulogs,list_disturbance_logs):
 
-    features = 23
+    features = 33
     dataset_num_entries=10000000
     counter = 0
     dataset = np.zeros((features,dataset_num_entries))
@@ -185,18 +207,32 @@ def generateDataset(list_ulogs,list_disturbance_logs):
     log_progressbar = trange(len(list_ulogs), desc='', leave=True)
 
     # for ulog_entry in tqdm(logs, desc = "log file: {}".format(str(ulog_entry_prev))):
-    for ulog_entry in list_ulogs:
+    for ulog_timestamp in list_ulogs:
+        disturbance_log = ''
+        ulog_entry = ''
+        dstrb_timestamps = list(disturbance_logs.keys())
+        nearest_timestamp = find_nearest_timestamp( dstrb_timestamps,ulog_timestamp )
+
+        if(np.abs(nearest_timestamp - ulog_timestamp) < 10):
+            disturbance_log = disturbance_logs.get(nearest_timestamp)
+            ulog_entry = list_ulogs.get(ulog_timestamp)
+
+        else:
+            print("no match found for Ulog: {}".format(list_ulogs.get(ulog_timestamp)))
 
         # print(ulog_entry)
-        disturbance_log = str(difflib.get_close_matches(ulog_entry, list_disturbance_logs,n=1)[0])
 
-        log_progressbar.set_description("log: {}".format(ulog_entry))
+        log_progressbar.set_description("log: {} {}".format(ulog_entry,disturbance_log))
         log_progressbar.refresh() # to show immediately the update
         log_progressbar.update()
 
         listOfCSVs = convert_ulog2csv(ulog_entry,log_eoi,'./',',')
 
         # print(listOfCSVs)
+
+
+
+
 
         # disturbance
         df = pd.read_csv(disturbance_log)
@@ -211,7 +247,9 @@ def generateDataset(list_ulogs,list_disturbance_logs):
 
 
         # vehicle_attitude csv
-        df = pd.read_csv([s for s in listOfCSVs if listOfEOI[1] in s][0])
+
+        csv_name = str(difflib.get_close_matches(str("_"+listOfEOI[1]+"_0"), listOfCSVs)[0])
+        df = pd.read_csv(csv_name)
 
         timestamp_attitude = np.array(df['timestamp'].tolist())
         P = np.array(df['rollspeed'].tolist()).astype(float)
@@ -225,22 +263,22 @@ def generateDataset(list_ulogs,list_disturbance_logs):
         length_attitude = timestamp_attitude.size
 
 
-
         # vechile_local_position csv
-        df = pd.read_csv([s for s in listOfCSVs if listOfEOI[0] in s][0])
+        csv_name = str(difflib.get_close_matches(str("_"+listOfEOI[0]+"_0"), listOfCSVs)[0])
+        df = pd.read_csv(csv_name)
         timestamp_local_position = np.array(df['timestamp'].tolist())
-        inertia_U = np.array(df['vx'].tolist()).astype(float)
-        inertia_V = np.array(df['vy'].tolist()).astype(float)
-        inertia_W = np.array(df['vz'].tolist()).astype(float)
-        inertia_Udot = np.array(df['ax'].tolist()).astype(float)
-        inertia_Vdot = np.array(df['ay'].tolist()).astype(float)
-        inertia_Wdot = np.array(df['az'].tolist()).astype(float)
+        vx = np.array(df['vx'].tolist()).astype(float)
+        vy = np.array(df['vy'].tolist()).astype(float)
+        vz = np.array(df['vz'].tolist()).astype(float)
+        ax = np.array(df['ax'].tolist()).astype(float)
+        ay = np.array(df['ay'].tolist()).astype(float)
+        az = np.array(df['az'].tolist()).astype(float)
         size_local_position = timestamp_local_position.size
 
 
         # vechile_actuator_outputs csv
-        df = pd.read_csv([s for s in listOfCSVs if listOfEOI[2] in s][0])
-
+        csv_name = str(difflib.get_close_matches(str("_"+listOfEOI[2]+"_0"), listOfCSVs)[0])
+        df = pd.read_csv(csv_name)
         timestamp_actuator_outputs = np.array(df['timestamp'].tolist())
         timestamp_actuator_outputs_cor = np.zeros(length_attitude)
         PWM_0 = np.array(df['output[0]'].tolist()).astype(float)
@@ -248,9 +286,50 @@ def generateDataset(list_ulogs,list_disturbance_logs):
         PWM_2 = np.array(df['output[2]'].tolist()).astype(float)
         PWM_3 = np.array(df['output[3]'].tolist()).astype(float)
 
+# log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs,\
+#             vehicle_local_position_setpoint,vehicle_rates_setpoint,\
+#             vehicle_attitude_setpoint'
+
+
+        # vechile_local_position_setpoint csv
+        csv_name = str(difflib.get_close_matches(str("_"+listOfEOI[3]+"_0"), listOfCSVs)[0])
+        df = pd.read_csv(csv_name)
+        timestamp_local_position_setpoint = np.array(df['timestamp'].tolist())
+        ref_vx = np.array(df['vx'].tolist()).astype(float)
+        ref_vy = np.array(df['vy'].tolist()).astype(float)
+        ref_vz = np.array(df['vz'].tolist()).astype(float)
+        size_local_position_setpoint = timestamp_local_position_setpoint.size
+
+
+        # vechile_rates_setpoint csv
+        csv_name = str(difflib.get_close_matches(str("_"+listOfEOI[4]+"_0"), listOfCSVs)[0])
+        df = pd.read_csv(csv_name)
+        timestamp_vehicle_rate_setpoint = np.array(df['timestamp'].tolist())
+        ref_P = np.array(df['roll'].tolist()).astype(float)
+        ref_Q = np.array(df['pitch'].tolist()).astype(float)
+        ref_R = np.array(df['yaw'].tolist()).astype(float)
+        size_vehicle_rate_setpoint = timestamp_vehicle_rate_setpoint.size
+
+
+        # vehicle_attitude_setpoint csv
+        csv_name = str(difflib.get_close_matches(str("_"+listOfEOI[5]+"_0"), listOfCSVs)[0])
+        df = pd.read_csv(csv_name)
+        timestamp_vehicle_attitude_setpoint = np.array(df['timestamp'].tolist())
+        q1_d = np.array(df['q_d[0]'].tolist()).astype(float)
+        q2_d = np.array(df['q_d[1]'].tolist()).astype(float)
+        q3_d = np.array(df['q_d[2]'].tolist()).astype(float)
+        q4_d = np.array(df['q_d[3]'].tolist()).astype(float)
+        q_d = [q1_d,q2_d,q3_d,q4_d]
+        size_vehicle_attitude_setpoint = timestamp_vehicle_attitude_setpoint.size
+
+
         # not all entries are written at the same time in the log file, thus we
         # will align them all by assign them to closet entry that corresponds in the
         # local_position log
+
+        # timestamp_local_position = timestamp_attitude
+        # size_local_position = length_attitude
+
         P_ = np.zeros(len(timestamp_local_position),dtype=float)
         Q_ = np.zeros(len(timestamp_local_position),dtype=float)
         R_ = np.zeros(len(timestamp_local_position),dtype=float)
@@ -258,6 +337,22 @@ def generateDataset(list_ulogs,list_disturbance_logs):
         q2_ = np.zeros(len(timestamp_local_position),dtype=float)
         q3_ = np.zeros(len(timestamp_local_position),dtype=float)
         q4_ = np.zeros(len(timestamp_local_position),dtype=float)
+        q1_d_ = np.zeros(len(timestamp_local_position),dtype=float)
+        q2_d_ = np.zeros(len(timestamp_local_position),dtype=float)
+        q3_d_ = np.zeros(len(timestamp_local_position),dtype=float)
+        q4_d_ = np.zeros(len(timestamp_local_position),dtype=float)
+        ref_vx_ = np.zeros(len(timestamp_local_position),dtype=float)
+        ref_vy_ = np.zeros(len(timestamp_local_position),dtype=float)
+        ref_vz_ = np.zeros(len(timestamp_local_position),dtype=float)
+        vx_ = np.zeros(len(timestamp_local_position),dtype=float)
+        vy_ = np.zeros(len(timestamp_local_position),dtype=float)
+        vz_ = np.zeros(len(timestamp_local_position),dtype=float)
+        ax_ = np.zeros(len(timestamp_local_position),dtype=float)
+        ay_ = np.zeros(len(timestamp_local_position),dtype=float)
+        az_ = np.zeros(len(timestamp_local_position),dtype=float)
+        ref_P_ = np.zeros(len(timestamp_local_position),dtype=float)
+        ref_Q_ = np.zeros(len(timestamp_local_position),dtype=float)
+        ref_R_ = np.zeros(len(timestamp_local_position),dtype=float)
         PWM_0_ = np.zeros(len(timestamp_local_position),dtype=float)
         PWM_1_ = np.zeros(len(timestamp_local_position),dtype=float)
         PWM_2_ = np.zeros(len(timestamp_local_position),dtype=float)
@@ -275,9 +370,6 @@ def generateDataset(list_ulogs,list_disturbance_logs):
             if(value >= 20000000 and value <= 50000000):
                 loc = find_nearest(timestamp_disturb,value)
 
-
-                print(value,timestamp_disturb[loc])
-
                 fx_[time_keeper] = fx[loc]
                 fy_[time_keeper] = fy[loc]
                 fz_[time_keeper] = fz[loc]
@@ -285,22 +377,13 @@ def generateDataset(list_ulogs,list_disturbance_logs):
                 my_[time_keeper] = my[loc]
                 mz_[time_keeper] = mz[loc]
 
-            time_keeper += 1
 
-        time_keeper = 0
-
-        for value in timestamp_local_position:
             loc = find_nearest(timestamp_actuator_outputs,value)
             PWM_0_[time_keeper] = PWM_0[loc]
             PWM_1_[time_keeper] = PWM_1[loc]
             PWM_2_[time_keeper] = PWM_2[loc]
             PWM_3_[time_keeper] = PWM_3[loc]
 
-            time_keeper += 1
-
-
-        time_keeper = 0
-        for value in timestamp_local_position:
             loc = find_nearest(timestamp_attitude,value)
             P_[time_keeper] = P[loc]
             Q_[time_keeper] = Q[loc]
@@ -310,16 +393,37 @@ def generateDataset(list_ulogs,list_disturbance_logs):
             q3_[time_keeper] = q3[loc]
             q4_[time_keeper] = q4[loc]
 
+            loc = find_nearest(timestamp_vehicle_attitude_setpoint,value)
+            q1_d_[time_keeper] = q1_d[loc]
+            q2_d_[time_keeper] = q2_d[loc]
+            q3_d_[time_keeper] = q3_d[loc]
+            q4_d_[time_keeper] = q4_d[loc]
+
+            loc = find_nearest(timestamp_vehicle_rate_setpoint,value)
+            ref_P_[time_keeper] = ref_P[loc]
+            ref_Q_[time_keeper] = ref_Q[loc]
+            ref_R_[time_keeper] = ref_R[loc]
+
+            loc = find_nearest(timestamp_local_position_setpoint,value)
+            ref_vx_[time_keeper] = ref_vx[loc]
+            ref_vy_[time_keeper] = ref_vy[loc]
+            ref_vz_[time_keeper] = ref_vz[loc]
+
+
+            loc = find_nearest(timestamp_local_position,value)
+            vx_[time_keeper] = vx[loc]
+            vy_[time_keeper] = vy[loc]
+            vz_[time_keeper] = vz[loc]
+            ax_[time_keeper] = ax[loc]
+            ay_[time_keeper] = ay[loc]
+            az_[time_keeper] = az[loc]
+
             time_keeper += 1
+
 
         q_ = [q1_,q2_,q3_,q4_]
 
 
-        inertia_Vel = [inertia_U,inertia_V,inertia_W]
-        inertia_Acc = [inertia_Udot,inertia_Vdot,inertia_Wdot]
-
-        [U_,V_,W_] = convertInertia2Body(q_,inertia_Vel)
-        [Udot,Vdot,Wdot] = convertInertia2Body(q_,inertia_Acc)
 
         T1 = (PWM_0_/1000 - 1)*motor_thrust*9.81
         T2 = (PWM_1_/1000 - 1)*motor_thrust*9.81
@@ -328,29 +432,38 @@ def generateDataset(list_ulogs,list_disturbance_logs):
 
 
         dataset[0,counter:counter  + size_local_position] = q1_
-        dataset[1,counter:counter  + size_local_position] = q2_
-        dataset[2,counter:counter  + size_local_position] = q3_
+        dataset[1,counter:counter  + size_local_position] = q2_ # ~ roll angle
+        dataset[2,counter:counter  + size_local_position] = q3_ # ~ pitch angle
         dataset[3,counter:counter  + size_local_position] = q4_
-        dataset[4,counter:counter  + size_local_position] = U_
-        dataset[5,counter:counter  + size_local_position] = V_
-        dataset[6,counter:counter  + size_local_position] = W_
-        dataset[7,counter:counter  + size_local_position] = T1
-        dataset[8,counter:counter  + size_local_position] = T2
-        dataset[9,counter:counter  + size_local_position] = T3
-        dataset[10,counter:counter + size_local_position] = T4
-        dataset[11,counter:counter + size_local_position] = P_
-        dataset[12,counter:counter + size_local_position] = Q_
-        dataset[13,counter:counter + size_local_position] = R_
-        dataset[14,counter:counter + size_local_position] = Udot
-        dataset[15,counter:counter + size_local_position] = Vdot
-        dataset[16,counter:counter + size_local_position] = Wdot
-
-        dataset[17,counter:counter + size_local_position] = fx_
-        dataset[18,counter:counter + size_local_position] = fy_
-        dataset[19,counter:counter + size_local_position] = fz_
-        dataset[20,counter:counter + size_local_position] = mx_
-        dataset[21,counter:counter + size_local_position] = my_
-        dataset[22,counter:counter + size_local_position] = mz_
+        dataset[4,counter:counter  + size_local_position] = q1_d_
+        dataset[5,counter:counter  + size_local_position] = q2_d_ # ~ roll angle
+        dataset[6,counter:counter  + size_local_position] = q3_d_ # ~ pitch angle
+        dataset[7,counter:counter  + size_local_position] = q4_d_
+        dataset[8,counter:counter  + size_local_position] = vx_
+        dataset[9,counter:counter  + size_local_position] = vy_
+        dataset[10,counter:counter  + size_local_position] = vz_
+        dataset[11,counter:counter  + size_local_position] = ref_vx_
+        dataset[12,counter:counter  + size_local_position] = ref_vy_
+        dataset[13,counter:counter  + size_local_position] = ref_vz_
+        dataset[14,counter:counter  + size_local_position] = T1
+        dataset[15,counter:counter  + size_local_position] = T2
+        dataset[16,counter:counter  + size_local_position] = T3
+        dataset[17,counter:counter + size_local_position] = T4
+        dataset[18,counter:counter + size_local_position] = P_
+        dataset[19,counter:counter + size_local_position] = Q_
+        dataset[20,counter:counter + size_local_position] = R_
+        dataset[21,counter:counter + size_local_position] = ref_P_
+        dataset[22,counter:counter + size_local_position] = ref_Q_
+        dataset[23,counter:counter + size_local_position] = ref_R_
+        dataset[24,counter:counter + size_local_position] = ax_
+        dataset[25,counter:counter + size_local_position] = ay_
+        dataset[26,counter:counter + size_local_position] = az_
+        dataset[27,counter:counter + size_local_position] = fx_
+        dataset[28,counter:counter + size_local_position] = fy_
+        dataset[29,counter:counter + size_local_position] = fz_
+        dataset[30,counter:counter + size_local_position] = mx_
+        dataset[31,counter:counter + size_local_position] = my_
+        dataset[32,counter:counter + size_local_position] = mz_
 
 
         for csvFile in listOfCSVs:
@@ -371,7 +484,7 @@ def generateDataset(list_ulogs,list_disturbance_logs):
 # log_dir = "/home/henry/esl-sun/PX4/build/px4_sitl_default/logs/"
 log_dir = "./logs/"
 # entries of interest
-log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs'
+log_eoi = 'vehicle_local_position,vehicle_attitude,actuator_outputs,vehicle_local_position_setpoint,vehicle_rates_setpoint,vehicle_attitude_setpoint'
 listOfEOI = log_eoi.split(',')
 
 
@@ -385,20 +498,17 @@ numOfValLogs=0
 listOfULogs=[]
 listOfDisturbances=[]
 
-validation_logs=[]
-training_logs=[]
-
 
 # find all *.ulog files in log directory
 for root, dirs, files in os.walk(log_dir):
     for name in files:
-        numOfLogs = numOfLogs + 1
         log_name = str(os.path.join(root,name))
         # extension
         ext = str(os.path.splitext(name)[1])
 
         if(ext == '.ulg'):
             listOfULogs.append(log_name)
+            numOfLogs = numOfLogs + 1
 
         elif(ext == '.dist'):
             listOfDisturbances.append(log_name)
@@ -410,138 +520,69 @@ for root, dirs, files in os.walk(log_dir):
 
 numOfValLogs = int(np.floor(numOfLogs*validation_percentage))
 
-for x in range(numOfValLogs):
-    lognum = np.random.randint(0,numOfLogs)
-    validation_logs.append(listOfULogs[lognum])
+training_logs = {}
+validation_logs = {}
+disturbance_logs = {}
 
-training_logs = [e for e in listOfULogs if e not in validation_logs]
+
+for dstrb_log in listOfDisturbances:
+    timestamp = timeSinceEpoch(dstrb_log)
+    disturbance_logs.update({timestamp:dstrb_log})
+
+listOfValLogs = random.choices(listOfULogs,k=numOfValLogs)
+
+for validation_log in listOfValLogs:
+    timestamp = timeSinceEpoch(validation_log)
+    validation_logs.update({timestamp:validation_log})
+
+
+for log in listOfULogs:
+    if log not in list(validation_logs.values()):
+        timestamp = timeSinceEpoch(log)
+        training_logs.update({timestamp:log})
 
 
 train_dataset = generateDataset(training_logs,listOfDisturbances)
 validation_dataset = generateDataset(validation_logs,listOfDisturbances)
 
+train_dataset = np.nan_to_num(train_dataset)
+validation_dataset = np.nan_to_num(validation_dataset)
 
 train_num_samples=len(train_dataset[0,:])
 val_num_samples=len(validation_dataset[0,:])
 
 
-max_q1 = np.amax(train_dataset[0,:])
-max_q2 = np.amax(train_dataset[1,:])
-max_q3 = np.amax(train_dataset[2,:])
-max_q4 = np.amax(train_dataset[3,:])
-
-maxU = np.amax(train_dataset[4,:])
-maxV = np.amax(train_dataset[5,:])
-maxW = np.amax(train_dataset[6,:])
-
-max_T1 = np.amax(train_dataset[7,:])
-max_T2 = np.amax(train_dataset[8,:])
-max_T3 = np.amax(train_dataset[9,:])
-max_T4 = np.amax(train_dataset[10,:])
-
-maxP = np.amax(train_dataset[11,:])
-maxQ = np.amax(train_dataset[12,:])
-maxR = np.amax(train_dataset[13,:])
-
-maxUdot = np.amax(train_dataset[14,:])
-maxVdot = np.amax(train_dataset[15,:])
-maxWdot = np.amax(train_dataset[16,:])
+# train_dataset,train_dataset_max,train_dataset_min = minmax_feature_scaling(train_dataset)
+# validation_dataset,validation_dataset_max,validation_dataset_min = minmax_feature_scaling(validation_dataset)
 
 
-maxfx = np.amax(train_dataset[17,:])
-maxfy = np.amax(train_dataset[18,:])
-maxfz = np.amax(train_dataset[19,:])
-maxmx = np.amax(train_dataset[20,:])
-maxmy = np.amax(train_dataset[21,:])
-maxmz = np.amax(train_dataset[22,:])
+train_dataset,mean,std = normalise_dataset(train_dataset)
+validation_dataset,val_mean,val_std = normalise_dataset(validation_dataset)
 
 
-train_dataset[0,:] = train_dataset[0,:]
-train_dataset[1,:] = train_dataset[1,:]
-train_dataset[2,:] = train_dataset[2,:]
-train_dataset[3,:] = train_dataset[3,:]
-train_dataset[4,:] = train_dataset[4,:]/maxU
-train_dataset[5,:] = train_dataset[5,:]/maxV
-train_dataset[6,:] = train_dataset[6,:]/maxW
-train_dataset[7,:] = train_dataset[7,:]/max_T1
-train_dataset[8,:] = train_dataset[8,:]/max_T2
-train_dataset[9,:] = train_dataset[9,:]/max_T3
-train_dataset[10,:] = train_dataset[10,:]/max_T4
-train_dataset[11,:] = train_dataset[11,:]/maxP
-train_dataset[12,:] = train_dataset[12,:]/maxQ
-train_dataset[13,:] = train_dataset[13,:]/maxR
-train_dataset[14,:] = train_dataset[14,:]/maxUdot
-train_dataset[15,:] = train_dataset[15,:]/maxVdot
-train_dataset[16,:] = train_dataset[16,:]/maxWdot
+train_dataset,train_min,train_max = minmax_feature_scaling(train_dataset)
+max_validation_dataset_values,val_min,val_max = minmax_feature_scaling(validation_dataset)
 
-train_dataset[17,:] = train_dataset[17,:]
-train_dataset[18,:] = train_dataset[18,:]
-train_dataset[19,:] = train_dataset[19,:]
-train_dataset[20,:] = train_dataset[20,:]
-train_dataset[21,:] = train_dataset[21,:]
-train_dataset[22,:] = train_dataset[22,:]
+train_dataset = np.nan_to_num(train_dataset)
+validation_dataset = np.nan_to_num(validation_dataset)
 
-
-validation_dataset[0,:] = validation_dataset[0,:]
-validation_dataset[1,:] = validation_dataset[1,:]
-validation_dataset[2,:] = validation_dataset[2,:]
-validation_dataset[3,:] = validation_dataset[3,:]
-validation_dataset[4,:] = validation_dataset[4,:]/maxU
-validation_dataset[5,:] = validation_dataset[5,:]/maxV
-validation_dataset[6,:] = validation_dataset[6,:]/maxW
-validation_dataset[7,:] = validation_dataset[7,:]/max_T1
-validation_dataset[8,:] = validation_dataset[8,:]/max_T2
-validation_dataset[9,:] = validation_dataset[9,:]/max_T3
-validation_dataset[10,:] = validation_dataset[10,:]/max_T4
-validation_dataset[11,:] = validation_dataset[11,:]/maxP
-validation_dataset[12,:] = validation_dataset[12,:]/maxQ
-validation_dataset[13,:] = validation_dataset[13,:]/maxR
-validation_dataset[14,:] = validation_dataset[14,:]/maxUdot
-validation_dataset[15,:] = validation_dataset[15,:]/maxVdot
-validation_dataset[16,:] = validation_dataset[16,:]/maxWdot
-validation_dataset[17,:] = validation_dataset[17,:]/maxfx
-validation_dataset[18,:] = validation_dataset[18,:]/maxfy
-validation_dataset[19,:] = validation_dataset[19,:]/maxfz
-validation_dataset[20,:] = validation_dataset[20,:]
-validation_dataset[21,:] = validation_dataset[21,:]
-validation_dataset[22,:] = validation_dataset[22,:]
-
+# train_dataset = train_dataset/max_train_dataset_values[:,np.newaxis]
+# train_dataset,meep = whiten(train_dataset)
+# [x,y,z] = whitening_dataset(train_dataset)
+# print(y,z)
 
 print('\n--------------------------------------------------------------')
 print('Saving dataset readme at:', str(dataset_loc + '/'+dataset_name+'_readme'))
 print('--------------------------------------------------------------')
 with shelve.open( str(dataset_loc + '/'+dataset_name+'_readme')) as db:
 
-    db['maxUdot'] = maxUdot
-    db['maxVdot'] = maxVdot
-    db['maxWdot'] = maxWdot
 
-    db['maxU'] = maxU
-    db['maxV'] = maxV
-    db['maxW'] = maxW
-
-    db['maxP'] = maxP
-    db['maxQ'] = maxQ
-    db['maxR'] = maxR
-
-    db['max_T1'] = max_T1
-    db['max_T2'] = max_T2
-    db['max_T3'] = max_T3
-    db['max_T4'] = max_T4
-
-    db['max_q1'] = max_q1
-    db['max_q2'] = max_q2
-    db['max_q3'] = max_q3
-    db['max_q4'] = max_q4
-
-
-    db['maxfx'] = maxfx
-    db['maxfy'] = maxfy
-    db['maxfz'] = maxfz
-
-    db['maxmx'] = maxmx
-    db['maxmy'] = maxmy
-    db['maxmz'] = maxmz
+    db['std'] = std
+    db['mean'] = mean
+    # db['max_train_dataset_values'] = train_dataset_max
+    # db['max_validation_dataset_values'] = validation_dataset_max
+    # db['min_train_dataset_values'] = train_dataset_min
+    # db['min_validation_dataset_values'] = validation_dataset_min
 
     db['train_dataset_num_entries'] = train_num_samples
     db['validation_dataset_num_entries'] = val_num_samples
